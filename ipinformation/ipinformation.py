@@ -9,26 +9,18 @@ from datetime import datetime
 asn_info_regex = re.compile(r'(AS)(\d+) (.*)')
 
 ######## Call and Use Databases
-# geoipv4_country = GeoDBConnection.GeoIPDB().geoipv4_country()
-# geoipv6_country = GeoDBConnection.GeoIPDB().geoipv6_country()
-# geoipv4_city = GeoDBConnection.GeoIPDB().geoipv4_city()
-# geoipv6_city = GeoDBConnection.GeoIPDB().geoipv6_city()
-# geoipv4_as = GeoDBConnection.GeoIPDB().geoipv4_as()
-# geoipv6_as = GeoDBConnection.GeoIPDB().geoipv6_as()
+geoipv4_country = GeoDBConnection.GeoIPDB().geoipv4_country()
+geoipv6_country = GeoDBConnection.GeoIPDB().geoipv6_country()
+geoipv4_city = GeoDBConnection.GeoIPDB().geoipv4_city()
+geoipv6_city = GeoDBConnection.GeoIPDB().geoipv6_city()
+geoipv4_as = GeoDBConnection.GeoIPDB().geoipv4_as()
+geoipv6_as = GeoDBConnection.GeoIPDB().geoipv6_as()
 
 
 class IPInformation:
     def __init__(self, ip_address):
         self.ip_address = ip_address
-        ######## Call and Use Databases
-        self.geoipv4_country = GeoDBConnection.GeoIPDB().geoipv4_country()
-        self.geoipv6_country = GeoDBConnection.GeoIPDB().geoipv6_country()
-        self.geoipv4_city = GeoDBConnection.GeoIPDB().geoipv4_city()
-        self.geoipv6_city = GeoDBConnection.GeoIPDB().geoipv6_city()
-        self.geoipv4_as = GeoDBConnection.GeoIPDB().geoipv4_as()
-        self.geoipv6_as = GeoDBConnection.GeoIPDB().geoipv6_as()
         #TODO:Add Error IsNotIP
-
 
     def is_ip(self):
         """is_ip( ) = Return true if valid IP address return false if invalid IP address
@@ -170,7 +162,7 @@ class IPInformation:
 
         data = { 'geo': {} }
         if self.is_public():
-            city_information = self.geoipv4_city.record_by_addr(self.ip_address)
+            city_information = geoipv4_city.record_by_addr(self.ip_address)
             data['geo'].update(city_information)
             longitude = city_information.get('longitude')
             latitude = city_information.get('latitude')
@@ -314,7 +306,7 @@ class IPInformation:
             #AS Creation Date
             data['whois']['as'].update( { 'creation_date': time_info.convert_time( d.get('asn_date') ).convert_to_utc() } )
             # AS Name
-            asn_response = self.geoipv4_as.asn_by_addr( self.ip_address )
+            asn_response = geoipv4_as.asn_by_addr( self.ip_address )
             if asn_response:
                 asn_info = re.search( asn_info_regex, asn_response.decode('utf-8', "replace") )
                 try:

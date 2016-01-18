@@ -23,7 +23,7 @@ if not os.path.exists(geoip_directory):
     except OSError as error:
         print 'Failed to create %s'%geoip_directory
         print '%s'%error
-        print 'Exiting Script'
+        print 'Exiting Script!'
         sys.exit(1)
 
 class GeoIPDB():
