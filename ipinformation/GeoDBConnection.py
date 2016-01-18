@@ -105,3 +105,6 @@ class GeoIPDB():
         return pygeoip.GeoIP( '%s/%s' %( geoip_directory, filename ) )
 
 
+
+if __name__ == "__main__":
+    GeoIPDB()
