@@ -17,7 +17,7 @@ geoip_directory = os.path.join( base_directory, 'GeoIP' )
 
 
 if not os.path.exists(geoip_directory):
-    print '%s does not exist. Creating it now.'%geoip_directory
+    print '%s does not exist. Creating it now.\n'%geoip_directory
     try:
         os.mkdir(geoip_directory)
     except OSError as error:
@@ -103,8 +103,3 @@ class GeoIPDB():
                 sys.exit(1)
 
         return pygeoip.GeoIP( '%s/%s' %( geoip_directory, filename ) )
-
-
-
-if __name__ == "__main__":
-    GeoIPDB()
