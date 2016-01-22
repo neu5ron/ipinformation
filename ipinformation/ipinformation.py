@@ -20,7 +20,12 @@ geoipv6_as = GeoDBConnection.GeoIPDB().geoipv6_as()
 class IPInformation:
     def __init__(self, ip_address):
         self.ip_address = ip_address
-        #TODO:Add Error IsNotIP
+        try:
+            self.domain_name = self.ip_address.encode('ascii')
+        except ( UnicodeEncodeError, ValueError) as error:
+            print error
+            print '%s is not valid. The IP Address should be input as an ascii string.\n'%self.domain_name.encode('utf8','replace')
+            raise ValueError
 
     def is_ip(self):
         """is_ip( ) = Return true if valid IP address return false if invalid IP address
@@ -64,7 +69,7 @@ class IPInformation:
             return True
         else: #Unknown Type
             return False
-            print '"%s" is unknown.\n' %self.ip_address
+            print '"%s" is unknown.' %self.ip_address
 
     def general_info(self):
         """general_info( ) = Return IP in bits, ip_type (ie: private, multicast, loopback,etc..), time updated/returned and version for an IP Address
@@ -81,7 +86,7 @@ class IPInformation:
                      'version': '4'}}
         """
         if not self.is_ip():
-            print "'%s' is not a valid ip_address.\n" %self.ip_address #TEST
+            print "'%s' is not a valid ip_address." %self.ip_address #TEST
             return False
 
         if netaddr.valid_ipv4( self.ip_address ): #IPv4 Address
@@ -100,7 +105,7 @@ class IPInformation:
                 ip_type = 'loopback'
             elif ip_addr.is_netmask():
                 ip_type = 'netmask'
-                print "'%s' is a netmask.\n" %self.ip_address
+                print "'%s' is a netmask." %self.ip_address
             elif ip_addr.is_reserved():
                 ip_type = 'reserved'
             elif ip_addr.is_link_local():
@@ -109,7 +114,7 @@ class IPInformation:
                 ip_type = 'public'
             else: #Unknown Type
                 ip_type = 'unknown'
-                print "'%s' is unknown.\n" %self.ip_address
+                print "'%s' is unknown." %self.ip_address
         elif netaddr.valid_ipv6( self.ip_address ): #IPv6 Address#TODO:Finish IPv6
             ip_version = '6'
             print 'Is IPv6'
@@ -157,7 +162,7 @@ class IPInformation:
         """
 
         if not self.is_ip():
-            print "'%s' is not a valid ip_address\n" %self.ip_address
+            print "'%s' is not a valid ip_address." %self.ip_address
             return False
 
         data = { 'geo': {} }
@@ -272,17 +277,17 @@ class IPInformation:
             try:
                 d = ipwhois.IPWhois( self.ip_address ).lookup()
             except ipwhois.HTTPLookupError:
-                print "No Whois information for '%s' because HTTPLookupError\n" %(self.ip_address)
+                print "No Whois information for '%s' because HTTPLookupError" %(self.ip_address)
                 data = null_whois_info()
                 data['whois'].update( { 'error': 'yes' } )
                 return data
             except ipwhois.WhoisLookupError:
-                print "No Whois information for '%s' because WhoisLookupError \n" %(self.ip_address)
+                print "No Whois information for '%s' because WhoisLookupError" %(self.ip_address)
                 data = null_whois_info()
                 data['whois'].update( { 'error': 'yes' } )
                 return data
             except (ipwhois.ASNLookupError, ipwhois.ASNRegistryError):
-                print "No Whois information for '%s' because ASNLookupError \n" %(self.ip_address)
+                print "No Whois information for '%s' because ASNLookupError" %(self.ip_address)
                 data = null_whois_info()
                 data['whois'].update( { 'error': 'yes' } )
                 return data
@@ -314,10 +319,10 @@ class IPInformation:
                     name = asn_info.group(3)
                     data['whois']['as'].update( { 'name': name } )
                 except (ValueError, TypeError):
-                    print 'Error grabbing AS Name for:%s\n', self.ip_address
+                    print 'Error grabbing AS Name for:%s', self.ip_address
                     data['whois']['as'].update( {'name': None} )
             else:
-                print 'No AS Name result for %s\n' %self.ip_address
+                print 'No AS Name result for %s' %self.ip_address
                 data['whois']['as'].update( {'name': None} )
 
             # Registration Information by Subnet
@@ -385,7 +390,7 @@ class IPInformation:
 
         # Assign all null values if not public IP
         else:
-            print "No Whois information for '%s' because it is not a public ip\n" %self.ip_address #TEST#
+            print "No Whois information for '%s' because it is not a public ip" %self.ip_address #TEST#
             data = null_whois_info()
         return data
 
@@ -494,7 +499,7 @@ class IPInformation:
                    'reverse_ip': None}}
         """
         if not self.is_ip():
-            print "'%s' is not a valid ip_address\n" %self.ip_address
+            print "'%s' is not a valid ip_address" %self.ip_address
             return None
         data = dict()
         data.update(self.general_info())
