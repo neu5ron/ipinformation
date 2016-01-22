@@ -21,7 +21,7 @@ class IPInformation:
     def __init__(self, ip_address):
         self.ip_address = ip_address
         try:
-            self.domain_name = self.ip_address.encode('ascii')
+            self.ip_address = self.ip_address.encode('ascii')
         except ( UnicodeEncodeError, ValueError) as error:
             print error
             print '%s is not valid. The IP Address should be input as an ascii string.\n'%self.domain_name.encode('utf8','replace')
