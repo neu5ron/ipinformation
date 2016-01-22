@@ -1,3 +1,4 @@
+#!/usr/bin/env python2.7
 from . import GeoDBConnection
 from . import time_info
 import netaddr

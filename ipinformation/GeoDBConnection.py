@@ -1,15 +1,14 @@
+#!/usr/bin/env python2.7
 from datetime import datetime
-import os
-import getpass
+import os, sys
 import requests
 import gzip
 import io
 import pygeoip
-import sys
 from dateutil import parser
 
 ######################################## # Edit If Need Be
-base_directory = os.path.join( '/home/', getpass.getuser() ) #Directory where folders will be created
+base_directory = os.path.expanduser("~") #Directory where folders will be created
 hours_to_pull_new_geoip_db = 48 #Use this variable in hours to determine how often to download and update the local databases
 ########################################
 

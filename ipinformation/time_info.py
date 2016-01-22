@@ -1,3 +1,4 @@
+#!/usr/bin/env python2.7
 from dateutil import parser
 from pytz import timezone, UTC, exceptions, FixedOffset
 from datetime import datetime
