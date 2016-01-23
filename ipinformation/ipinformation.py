@@ -88,7 +88,7 @@ class IPInformation:
                      'version': '4'}}
         """
         if not self.is_ip():
-            print "'%s' is not a valid ip_address." %self.ip_address #TEST
+            print '"%s" is not a valid ip_address.' %self.ip_address #TEST
             return False
 
         if netaddr.valid_ipv4( self.ip_address ): #IPv4 Address
@@ -107,7 +107,7 @@ class IPInformation:
                 ip_type = 'loopback'
             elif ip_addr.is_netmask():
                 ip_type = 'netmask'
-                print "'%s' is a netmask." %self.ip_address
+                print '"%s" is a netmask.' %self.ip_address
             elif ip_addr.is_reserved():
                 ip_type = 'reserved'
             elif ip_addr.is_link_local():
@@ -116,7 +116,7 @@ class IPInformation:
                 ip_type = 'public'
             else: #Unknown Type
                 ip_type = 'unknown'
-                print "'%s' is unknown." %self.ip_address
+                print '"%s" is unknown.' %self.ip_address
         elif netaddr.valid_ipv6( self.ip_address ): #IPv6 Address#TODO:Finish IPv6
             ip_version = '6'
             print 'Is IPv6'
@@ -165,7 +165,7 @@ class IPInformation:
         """
 
         if not self.is_ip():
-            print "'%s' is not a valid ip_address." %self.ip_address
+            print '"%s" is not a valid ip_address.' %self.ip_address
             return False
 
         data = { 'geo': {} }
@@ -504,7 +504,7 @@ class IPInformation:
                    'reverse_ip': None}}
         """
         if not self.is_ip():
-            print "'%s' is not a valid ip_address" %self.ip_address
+            print '"%s" is not a valid ip_address' %self.ip_address
             return None
         data = dict()
         data.update(self.general_info())

@@ -8,7 +8,7 @@ import pygeoip
 from dateutil import parser
 
 ######################################## # Edit If Need Be
-base_directory = os.path.expanduser("~") #Directory where folders will be created
+base_directory = os.path.expanduser("~") #Base directory where 'GeoIP' directory will be created (currently home directory)
 hours_to_pull_new_geoip_db = 48 #Use this variable in hours to determine how often to download and update the local databases
 ########################################
 
