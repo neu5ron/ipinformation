@@ -3,7 +3,7 @@ import sys
 import io
 
 NAME = 'ipinformation'
-VERSION = '1.0.0'
+VERSION = '1.0.6'
 AUTHOR = 'neu5ron'
 AUTHOR_EMAIL = 'therealneu5ron AT gmail DOT com'
 DESCRIPTION = "Combine information about an ip address in JSON format"
@@ -23,7 +23,7 @@ INSTALL_REQUIRES = []
 
 
 if sys.version_info >= (3,):
-    print 'Requires python 2.7'
+    print 'Requires python 2.7.'
     sys.exit(1)
 else:
     INSTALL_REQUIRES.append("requests[security]")

@@ -59,14 +59,16 @@ class GeoIPDB():
 
             # Check to see if download timestamp exists and if it does see time diff since download
             if os.path.exists(file_last_downloaded):
-                last_downloaded = open(file_last_downloaded, 'r').read().strip()
+                with open( file_last_downloaded, 'r' ) as f:
+                    last_downloaded = f.read().strip()
                 time_diff = (current_time - parser.parse(last_downloaded)).total_seconds()
                 if time_diff > hours_to_pull_new_geoip_db*3600:
                     need_to_download = True
 
             else:
                 # Set download timestamp if it was not downloaded using this script and this is the first time the script is ran
-                open(file_last_downloaded, 'w+').write(str(current_time))
+                with open( file_last_downloaded, 'w+' ) as f:
+                    f.write(str(current_time))
 
         else:
             need_to_download = True
@@ -79,7 +81,8 @@ class GeoIPDB():
                 decompressed_content = gzip.GzipFile(fileobj=compressed_content)
                 with open( '%s/%s' %(geoip_directory, filename), 'wb' ) as downloaded_file:
                     downloaded_file.write(decompressed_content.read())
-                    open(file_last_downloaded, 'w+').write(str(current_time))
+                    with open( file_last_downloaded, 'w+' ) as f:
+                        f.write(str(current_time))
 
             except IOError as error:
                 print 'Could not download and write GeoIP database due to %s.\n'%error

@@ -1,5 +1,9 @@
 Changelog
 =========
+1.0.6 (2016-01-27)
+-------------------
+-Using with open file instead of just open.
+
 1.0.5 (2016-01-26)
 -------------------
 -Added whois raw information
