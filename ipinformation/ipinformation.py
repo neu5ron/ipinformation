@@ -25,7 +25,7 @@ class IPInformation:
             self.ip_address = self.ip_address.encode('ascii')
         except ( UnicodeEncodeError, ValueError) as error:
             print error
-            print '%s is not valid. The IP Address should be input as an ascii string.\n'%self.ip_address.encode('utf8','replace')
+            print '"%s" is not valid. The IP Address should be input as an ascii string.\n'%self.ip_address.encode('utf8','replace')
             raise ValueError
 
     def is_ip(self):
@@ -70,7 +70,7 @@ class IPInformation:
             return True
         else: #Unknown Type
             return False
-            print '"%s" is unknown.' %self.ip_address
+            print '"%s" is an unknown IP Address.' %self.ip_address
 
     def general_info(self):
         """general_info( ) = Return IP in bits, ip_type (ie: private, multicast, loopback,etc..), time updated/returned and version for an IP Address
@@ -88,7 +88,7 @@ class IPInformation:
                      'version': '4'}}
         """
         if not self.is_ip():
-            print '"%s" is not a valid ip_address.' %self.ip_address #TEST
+            print '"%s" is not a valid IP Address.' %self.ip_address
             return False
 
         if netaddr.valid_ipv4( self.ip_address ): #IPv4 Address
@@ -116,7 +116,7 @@ class IPInformation:
                 ip_type = 'public'
             else: #Unknown Type
                 ip_type = 'unknown'
-                print '"%s" is unknown.' %self.ip_address
+                print '"%s" is an unknown IP Address.' %self.ip_address
         elif netaddr.valid_ipv6( self.ip_address ): #IPv6 Address#TODO:Finish IPv6
             ip_version = '6'
             print 'Is IPv6'
@@ -165,14 +165,16 @@ class IPInformation:
         """
 
         if not self.is_ip():
-            print '"%s" is not a valid ip_address.' %self.ip_address
+            print '"%s" is not a valid IP Address.' %self.ip_address
             return False
 
         data = { 'geo': {} }
         if self.is_public():
             city_information = geoipv4_city.record_by_addr(self.ip_address)
             data['geo'].update(city_information)
+            # longitude = float(city_information.get('longitude'))#TODO:TEST
             longitude = city_information.get('longitude')
+            # latitude = float(city_information.get('latitude'))#TODO:TEST
             latitude = city_information.get('latitude')
             coordinates = [ latitude, longitude  ]
             data['geo'].update( { 'coordinates': coordinates } )
@@ -197,6 +199,7 @@ class IPInformation:
                           'number': [15169],
                           'registry': 'arin'},
                    'error': 'no',
+                   'raw': '\n#\n# ARIN WHOIS data and services are subject to the Terms of Use\n# available at: https://www.arin.net/whois_tou.html\n#\n# If you see inaccuracies in the results, please report at\n# http://www.arin.net/public/whoisinaccuracy/index.xhtml\n#\n\n\n#\n# The following results may also be obtained via:\n# http://whois.arin.net/rest/nets;q=8.8.4.4?showDetails=true&showARIN=false&showNonArinTopLevelNet=false&ext=netref2\n#\n\n\n# start\n\nNetRange:       8.0.0.0 - 8.255.255.255\nCIDR:           8.0.0.0/8\nNetName:        LVLT-ORG-8-8\nNetHandle:      NET-8-0-0-0-1\nParent:          ()\nNetType:        Direct Allocation\nOriginAS:       \nOrganization:   Level 3 Communications, Inc. (LVLT)\nRegDate:        1992-12-01\nUpdated:        2012-02-24\nRef:            http://whois.arin.net/rest/net/NET-8-0-0-0-1\n\n\n\nOrgName:        Level 3 Communications, Inc.\nOrgId:          LVLT\nAddress:        1025 Eldorado Blvd.\nCity:           Broomfield\nStateProv:      CO\nPostalCode:     80021\nCountry:        US\nRegDate:        1998-05-22\nUpdated:        2012-01-30\nComment:        ADDRESSES WITHIN THIS BLOCK ARE NON-PORTABLE\nRef:            http://whois.arin.net/rest/org/LVLT\n\n\nOrgTechHandle: IPADD5-ARIN\nOrgTechName:   ipaddressing\nOrgTechPhone:  +1-877-453-8353 \nOrgTechEmail:  ipaddressing@level3.com\nOrgTechRef:    http://whois.arin.net/rest/poc/IPADD5-ARIN\n\nOrgNOCHandle: NOCSU27-ARIN\nOrgNOCName:   NOC Support\nOrgNOCPhone:  +1-877-453-8353 \nOrgNOCEmail:  noc.coreip@level3.com\nOrgNOCRef:    http://whois.arin.net/rest/poc/NOCSU27-ARIN\n\nOrgAbuseHandle: APL8-ARIN\nOrgAbuseName:   Abuse POC LVLT\nOrgAbusePhone:  +1-877-453-8353 \nOrgAbuseEmail:  abuse@level3.com\nOrgAbuseRef:    http://whois.arin.net/rest/poc/APL8-ARIN\n\n# end\n\n\n# start\n\nNetRange:       8.8.4.0 - 8.8.4.255\nCIDR:           8.8.4.0/24\nNetName:        LVLT-GOGL-8-8-4\nNetHandle:      NET-8-8-4-0-1\nParent:         LVLT-ORG-8-8 (NET-8-0-0-0-1)\nNetType:        Reallocated\nOriginAS:       \nOrganization:   Google Inc. (GOGL)\nRegDate:        2014-03-14\nUpdated:        2014-03-14\nRef:            http://whois.arin.net/rest/net/NET-8-8-4-0-1\n\n\n\nOrgName:        Google Inc.\nOrgId:          GOGL\nAddress:        1600 Amphitheatre Parkway\nCity:           Mountain View\nStateProv:      CA\nPostalCode:     94043\nCountry:        US\nRegDate:        2000-03-30\nUpdated:        2015-11-06\nRef:            http://whois.arin.net/rest/org/GOGL\n\n\nOrgAbuseHandle: ABUSE5250-ARIN\nOrgAbuseName:   Abuse\nOrgAbusePhone:  +1-650-253-0000 \nOrgAbuseEmail:  network-abuse@google.com\nOrgAbuseRef:    http://whois.arin.net/rest/poc/ABUSE5250-ARIN\n\nOrgTechHandle: ZG39-ARIN\nOrgTechName:   Google Inc\nOrgTechPhone:  +1-650-253-0000 \nOrgTechEmail:  arin-contact@google.com\nOrgTechRef:    http://whois.arin.net/rest/poc/ZG39-ARIN\n\n# end\n\n\n\n#\n# ARIN WHOIS data and services are subject to the Terms of Use\n# available at: https://www.arin.net/whois_tou.html\n#\n# If you see inaccuracies in the results, please report at\n# http://www.arin.net/public/whoisinaccuracy/index.xhtml\n#\n\n',
                    'registration': [{'abuse_emails': None,
                                      'address': '1025 Eldorado Blvd.',
                                      'cidr': '8.0.0.0/8',
@@ -237,6 +240,7 @@ class IPInformation:
                           'name': None,
                           'number': None,
                           'registry': None},
+                   'raw': None,
                    'registration': [{'abuse_emails': None,
                                      'address': None,
                                      'cidr': None,
@@ -259,6 +263,7 @@ class IPInformation:
                                   'name': None,
                                   'number': None,
                                   'registry': None},
+                           'raw': None,
                            'registration': [{'abuse_emails': None,
                                              'address': None,
                                              'cidr': None,
@@ -279,7 +284,7 @@ class IPInformation:
             #TODO:What about noc, tech, and abuse information
             data = { 'whois': { 'as': {} } }
             try:
-                d = ipwhois.IPWhois( self.ip_address ).lookup()
+                d = ipwhois.IPWhois( self.ip_address ).lookup(inc_raw=True)
             except ipwhois.HTTPLookupError:
                 print "No Whois information for '%s' because HTTPLookupError" %(self.ip_address)
                 data = null_whois_info()
@@ -323,7 +328,7 @@ class IPInformation:
                     name = asn_info.group(3)
                     data['whois']['as'].update( { 'name': name } )
                 except (ValueError, TypeError):
-                    print 'Error grabbing AS Name for:%s', self.ip_address
+                    print 'Error grabbing AS Name for %s', self.ip_address
                     data['whois']['as'].update( {'name': None} )
             else:
                 print 'No AS Name result for %s' %self.ip_address
@@ -381,6 +386,9 @@ class IPInformation:
                 # Update reg information
                 data['whois'].setdefault('registration', []).append(reg)
 
+            # Add Raw WhoIs
+            data['whois'].update( { 'raw': d.get('raw') } )
+
             # Reverse IP
             try:
                 reverse_ip = ipwhois.Net(self.ip_address).get_host()[0]
@@ -394,7 +402,7 @@ class IPInformation:
 
         # Assign all null values if not public IP
         else:
-            print "No Whois information for '%s' because it is not a public ip" %self.ip_address #TEST#
+            print 'No Whois information for "%s" because it is not a public IP Address.' %self.ip_address
             data = null_whois_info()
         return data
 
@@ -427,6 +435,7 @@ class IPInformation:
                           'name': u'Google Inc.',
                           'number': [15169],
                           'registry': 'arin'},
+                   'raw': '\n#\n# ARIN WHOIS data and services are subject to the Terms of Use\n# available at: https://www.arin.net/whois_tou.html\n#\n# If you see inaccuracies in the results, please report at\n# http://www.arin.net/public/whoisinaccuracy/index.xhtml\n#\n\n\n#\n# The following results may also be obtained via:\n# http://whois.arin.net/rest/nets;q=8.8.4.4?showDetails=true&showARIN=false&showNonArinTopLevelNet=false&ext=netref2\n#\n\n\n# start\n\nNetRange:       8.0.0.0 - 8.255.255.255\nCIDR:           8.0.0.0/8\nNetName:        LVLT-ORG-8-8\nNetHandle:      NET-8-0-0-0-1\nParent:          ()\nNetType:        Direct Allocation\nOriginAS:       \nOrganization:   Level 3 Communications, Inc. (LVLT)\nRegDate:        1992-12-01\nUpdated:        2012-02-24\nRef:            http://whois.arin.net/rest/net/NET-8-0-0-0-1\n\n\n\nOrgName:        Level 3 Communications, Inc.\nOrgId:          LVLT\nAddress:        1025 Eldorado Blvd.\nCity:           Broomfield\nStateProv:      CO\nPostalCode:     80021\nCountry:        US\nRegDate:        1998-05-22\nUpdated:        2012-01-30\nComment:        ADDRESSES WITHIN THIS BLOCK ARE NON-PORTABLE\nRef:            http://whois.arin.net/rest/org/LVLT\n\n\nOrgTechHandle: IPADD5-ARIN\nOrgTechName:   ipaddressing\nOrgTechPhone:  +1-877-453-8353 \nOrgTechEmail:  ipaddressing@level3.com\nOrgTechRef:    http://whois.arin.net/rest/poc/IPADD5-ARIN\n\nOrgNOCHandle: NOCSU27-ARIN\nOrgNOCName:   NOC Support\nOrgNOCPhone:  +1-877-453-8353 \nOrgNOCEmail:  noc.coreip@level3.com\nOrgNOCRef:    http://whois.arin.net/rest/poc/NOCSU27-ARIN\n\nOrgAbuseHandle: APL8-ARIN\nOrgAbuseName:   Abuse POC LVLT\nOrgAbusePhone:  +1-877-453-8353 \nOrgAbuseEmail:  abuse@level3.com\nOrgAbuseRef:    http://whois.arin.net/rest/poc/APL8-ARIN\n\n# end\n\n\n# start\n\nNetRange:       8.8.4.0 - 8.8.4.255\nCIDR:           8.8.4.0/24\nNetName:        LVLT-GOGL-8-8-4\nNetHandle:      NET-8-8-4-0-1\nParent:         LVLT-ORG-8-8 (NET-8-0-0-0-1)\nNetType:        Reallocated\nOriginAS:       \nOrganization:   Google Inc. (GOGL)\nRegDate:        2014-03-14\nUpdated:        2014-03-14\nRef:            http://whois.arin.net/rest/net/NET-8-8-4-0-1\n\n\n\nOrgName:        Google Inc.\nOrgId:          GOGL\nAddress:        1600 Amphitheatre Parkway\nCity:           Mountain View\nStateProv:      CA\nPostalCode:     94043\nCountry:        US\nRegDate:        2000-03-30\nUpdated:        2015-11-06\nRef:            http://whois.arin.net/rest/org/GOGL\n\n\nOrgAbuseHandle: ABUSE5250-ARIN\nOrgAbuseName:   Abuse\nOrgAbusePhone:  +1-650-253-0000 \nOrgAbuseEmail:  network-abuse@google.com\nOrgAbuseRef:    http://whois.arin.net/rest/poc/ABUSE5250-ARIN\n\nOrgTechHandle: ZG39-ARIN\nOrgTechName:   Google Inc\nOrgTechPhone:  +1-650-253-0000 \nOrgTechEmail:  arin-contact@google.com\nOrgTechRef:    http://whois.arin.net/rest/poc/ZG39-ARIN\n\n# end\n\n\n\n#\n# ARIN WHOIS data and services are subject to the Terms of Use\n# available at: https://www.arin.net/whois_tou.html\n#\n# If you see inaccuracies in the results, please report at\n# http://www.arin.net/public/whoisinaccuracy/index.xhtml\n#\n\n',
                    'error': 'no',
                    'registration': [{'abuse_emails': None,
                                      'address': '1025 Eldorado Blvd.',
@@ -488,6 +497,7 @@ class IPInformation:
                           'name': None,
                           'number': None,
                           'registry': None},
+                   'raw': None,
                    'registration': [{'abuse_emails': None,
                                      'address': None,
                                      'cidr': None,
@@ -504,7 +514,7 @@ class IPInformation:
                    'reverse_ip': None}}
         """
         if not self.is_ip():
-            print '"%s" is not a valid ip_address' %self.ip_address
+            print '"%s" is not a valid IP Address.' %self.ip_address
             return None
         data = dict()
         data.update(self.general_info())

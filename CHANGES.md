@@ -1,5 +1,9 @@
 Changelog
 =========
+1.0.5 (2016-01-26)
+-------------------
+-Added whois raw information
+
 1.0.4 (2016-01-18)
 -------------------
 -Minor changes
