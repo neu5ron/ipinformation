@@ -1,5 +1,13 @@
 Changelog
 =========
+1.0.7 (2016-03-14)
+-------------------
+-With ipwhois version 0.11.2 allows to not use whois for cyrmu and only dns in order to not get blacklisted and if it fails.
+-Set Maxmind DBs to only update second tuesday of every month. Technically just looks to see if its greater than 14 days since download
+-Added ability to grab AS Name & Number from Maxmind DB instead of having to do an online lookup
+-Added logging and removed prints
+-Using HTTPs maxmind database now
+
 1.0.6 (2016-01-27)
 -------------------
 -Using with open file instead of just open.

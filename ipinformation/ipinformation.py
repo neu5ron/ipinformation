@@ -5,9 +5,10 @@ import netaddr
 import re
 import ipwhois
 from datetime import datetime
+from GeoDBConnection import logging_file
 
 # Regex for ASN Number and Name
-asn_info_regex = re.compile(r'(AS)(\d+) (.*)')
+asn_info_regex = re.compile(r'AS(\d+) (.*)')
 
 ######## Call and Use Databases
 geoipv4_country = GeoDBConnection.GeoIPDB().geoipv4_country()
@@ -20,16 +21,22 @@ geoipv6_as = GeoDBConnection.GeoIPDB().geoipv6_as()
 
 class IPInformation:
     def __init__(self, ip_address):
+        """
+        :param ip_address:
+        """
         self.ip_address = ip_address
         try:
             self.ip_address = self.ip_address.encode('ascii')
-        except ( UnicodeEncodeError, ValueError) as error:
-            print error
-            print '"%s" is not valid. The IP Address should be input as an ascii string.\n'%self.ip_address.encode('utf8','replace')
+        except ( UnicodeEncodeError, ValueError, AttributeError) as error:
+            # print error
+            # print '"%s" is not valid. The IP Address should be input as an ascii string.\n'%self.ip_address.encode('utf8','replace')
+            print u'{0} is not valid. It should be input as an ascii string.'.format( unicode(self.ip_address) )
+            logging_file.error( u'{0} is not valid. It should be input as an ascii string.'.format( unicode(self.ip_address) ) )
             raise ValueError
 
     def is_ip(self):
-        """is_ip( ) = Return true if valid IP address return false if invalid IP address
+        """
+        Return true if valid IP address return false if invalid IP address
         >>> from ipinformation import IPInformation
         >>> print IPInformation(ip_address='8.8.8.8').is_ip()
             True
@@ -45,7 +52,8 @@ class IPInformation:
             return False
 
     def is_public(self):
-        """is_public( ) = Return true if an IP address is publicly accessible/routable
+        """
+        Return true if an IP address is publicly accessible/routable
         >>> from ipinformation import IPInformation
         >>> print IPInformation(ip_address='8.8.8.8').is_public()
             True
@@ -70,10 +78,12 @@ class IPInformation:
             return True
         else: #Unknown Type
             return False
-            print '"%s" is an unknown IP Address.' %self.ip_address
+            # print '"%s" is an unknown IP Address.' %self.ip_address
+            logging_file.error( '"{0}" is an unknown IP Address.'.format(self.ip_address) )
 
     def general_info(self):
-        """general_info( ) = Return IP in bits, ip_type (ie: private, multicast, loopback,etc..), time updated/returned and version for an IP Address
+        """
+        Return IP in bits, ip_type (ie: private, multicast, loopback,etc..), time updated/returned and version for an IP Address
         >>> from ipinformation import IPInformation
         >>> from pprint import pprint
         >>> pprint( IPInformation(ip_address='8.8.8.8').general_info() )
@@ -88,7 +98,8 @@ class IPInformation:
                      'version': '4'}}
         """
         if not self.is_ip():
-            print '"%s" is not a valid IP Address.' %self.ip_address
+            # print '"%s" is not a valid IP Address.' %self.ip_address
+            logging_file.error( '"{0}" is not a valid IP Address.'.format(self.ip_address) )
             return False
 
         if netaddr.valid_ipv4( self.ip_address ): #IPv4 Address
@@ -107,7 +118,8 @@ class IPInformation:
                 ip_type = 'loopback'
             elif ip_addr.is_netmask():
                 ip_type = 'netmask'
-                print '"%s" is a netmask.' %self.ip_address
+                # print '"%s" is a netmask.' %self.ip_address
+                logging_file.info( '"{0}" is a netmask.'.format(self.ip_address) )
             elif ip_addr.is_reserved():
                 ip_type = 'reserved'
             elif ip_addr.is_link_local():
@@ -116,7 +128,8 @@ class IPInformation:
                 ip_type = 'public'
             else: #Unknown Type
                 ip_type = 'unknown'
-                print '"%s" is an unknown IP Address.' %self.ip_address
+                # print '"%s" is an unknown IP Address.' %self.ip_address
+                logging_file.error( '"{0}" is an unknown IP Address.'.format(self.ip_address) )
         elif netaddr.valid_ipv6( self.ip_address ): #IPv6 Address#TODO:Finish IPv6
             ip_version = '6'
             print 'Is IPv6'
@@ -127,7 +140,8 @@ class IPInformation:
         return data
 
     def geo_info(self):
-        """geo_info( ) = Return Geo location information (City,State,Country,etc...) for an IP Address
+        """
+        Return Geo location information (City,State,Country,etc...) for an IP Address
         >>> from ipinformation import IPInformation
         >>> from pprint import pprint
         >>> pprint( IPInformation(ip_address='8.8.8.8').geo_info() )
@@ -165,19 +179,22 @@ class IPInformation:
         """
 
         if not self.is_ip():
-            print '"%s" is not a valid IP Address.' %self.ip_address
+            # print '"%s" is not a valid IP Address.' %self.ip_address
+            logging_file.error( '"{0}" is not a valid IP Address.'.format(self.ip_address) )
             return False
 
         data = { 'geo': {} }
+
         if self.is_public():
             city_information = geoipv4_city.record_by_addr(self.ip_address)
             data['geo'].update(city_information)
-            # longitude = float(city_information.get('longitude'))#TODO:TEST
+            # longitude = float(city_information.get('longitude'))#TESTING
             longitude = city_information.get('longitude')
-            # latitude = float(city_information.get('latitude'))#TODO:TEST
+            # latitude = float(city_information.get('latitude'))#TESTING
             latitude = city_information.get('latitude')
             coordinates = [ latitude, longitude  ]
             data['geo'].update( { 'coordinates': coordinates } )
+
         # Assign all null values if not public IP
         else:
             geoip_info = { 'general': { "city": None, "region_code": None, "asnum": None, "area_code": None, "time_zone": None, "dma_code": None, "metro_code": None, "country_code3": None, "country_name": None, "postal_code": None, "longitude": None, "country_code": None, "asname": None, "latitude": None, "coordinates": [ None, None ], "continent": None } }
@@ -188,7 +205,8 @@ class IPInformation:
         return data
 
     def whois_info(self):
-        """whois_info( ) = Return WhoisInfo of the IP (AS Name/Number/CIDR/etc...,Subnet, CIDR, City,State,Country,Address, etc...) for an IP Address
+        """
+        Return WhoisInfo of the IP (AS Name/Number/CIDR/etc...,Subnet, CIDR, City,State,Country,Address, etc...) for an IP Address
         >>> from ipinformation import IPInformation
         >>> from pprint import pprint
         >>> pprint( IPInformation(ip_address='8.8.8.8').whois_info() )
@@ -196,7 +214,7 @@ class IPInformation:
                           'country_code': 'US',
                           'creation_date': None,
                           'name': u'Google Inc.',
-                          'number': [15169],
+                          'number': 15169,
                           'registry': 'arin'},
                    'error': 'no',
                    'raw': '\n#\n# ARIN WHOIS data and services are subject to the Terms of Use\n# available at: https://www.arin.net/whois_tou.html\n#\n# If you see inaccuracies in the results, please report at\n# http://www.arin.net/public/whoisinaccuracy/index.xhtml\n#\n\n\n#\n# The following results may also be obtained via:\n# http://whois.arin.net/rest/nets;q=8.8.4.4?showDetails=true&showARIN=false&showNonArinTopLevelNet=false&ext=netref2\n#\n\n\n# start\n\nNetRange:       8.0.0.0 - 8.255.255.255\nCIDR:           8.0.0.0/8\nNetName:        LVLT-ORG-8-8\nNetHandle:      NET-8-0-0-0-1\nParent:          ()\nNetType:        Direct Allocation\nOriginAS:       \nOrganization:   Level 3 Communications, Inc. (LVLT)\nRegDate:        1992-12-01\nUpdated:        2012-02-24\nRef:            http://whois.arin.net/rest/net/NET-8-0-0-0-1\n\n\n\nOrgName:        Level 3 Communications, Inc.\nOrgId:          LVLT\nAddress:        1025 Eldorado Blvd.\nCity:           Broomfield\nStateProv:      CO\nPostalCode:     80021\nCountry:        US\nRegDate:        1998-05-22\nUpdated:        2012-01-30\nComment:        ADDRESSES WITHIN THIS BLOCK ARE NON-PORTABLE\nRef:            http://whois.arin.net/rest/org/LVLT\n\n\nOrgTechHandle: IPADD5-ARIN\nOrgTechName:   ipaddressing\nOrgTechPhone:  +1-877-453-8353 \nOrgTechEmail:  ipaddressing@level3.com\nOrgTechRef:    http://whois.arin.net/rest/poc/IPADD5-ARIN\n\nOrgNOCHandle: NOCSU27-ARIN\nOrgNOCName:   NOC Support\nOrgNOCPhone:  +1-877-453-8353 \nOrgNOCEmail:  noc.coreip@level3.com\nOrgNOCRef:    http://whois.arin.net/rest/poc/NOCSU27-ARIN\n\nOrgAbuseHandle: APL8-ARIN\nOrgAbuseName:   Abuse POC LVLT\nOrgAbusePhone:  +1-877-453-8353 \nOrgAbuseEmail:  abuse@level3.com\nOrgAbuseRef:    http://whois.arin.net/rest/poc/APL8-ARIN\n\n# end\n\n\n# start\n\nNetRange:       8.8.4.0 - 8.8.4.255\nCIDR:           8.8.4.0/24\nNetName:        LVLT-GOGL-8-8-4\nNetHandle:      NET-8-8-4-0-1\nParent:         LVLT-ORG-8-8 (NET-8-0-0-0-1)\nNetType:        Reallocated\nOriginAS:       \nOrganization:   Google Inc. (GOGL)\nRegDate:        2014-03-14\nUpdated:        2014-03-14\nRef:            http://whois.arin.net/rest/net/NET-8-8-4-0-1\n\n\n\nOrgName:        Google Inc.\nOrgId:          GOGL\nAddress:        1600 Amphitheatre Parkway\nCity:           Mountain View\nStateProv:      CA\nPostalCode:     94043\nCountry:        US\nRegDate:        2000-03-30\nUpdated:        2015-11-06\nRef:            http://whois.arin.net/rest/org/GOGL\n\n\nOrgAbuseHandle: ABUSE5250-ARIN\nOrgAbuseName:   Abuse\nOrgAbusePhone:  +1-650-253-0000 \nOrgAbuseEmail:  network-abuse@google.com\nOrgAbuseRef:    http://whois.arin.net/rest/poc/ABUSE5250-ARIN\n\nOrgTechHandle: ZG39-ARIN\nOrgTechName:   Google Inc\nOrgTechPhone:  +1-650-253-0000 \nOrgTechEmail:  arin-contact@google.com\nOrgTechRef:    http://whois.arin.net/rest/poc/ZG39-ARIN\n\n# end\n\n\n\n#\n# ARIN WHOIS data and services are subject to the Terms of Use\n# available at: https://www.arin.net/whois_tou.html\n#\n# If you see inaccuracies in the results, please report at\n# http://www.arin.net/public/whoisinaccuracy/index.xhtml\n#\n\n',
@@ -283,104 +301,154 @@ class IPInformation:
         if self.is_public():#TODO:Other stats with \n... for k,v in dict.items(): value=v.replace('\n','') dict[k]=value
             #TODO:What about noc, tech, and abuse information
             data = { 'whois': { 'as': {} } }
+
             try:
-                d = ipwhois.IPWhois( self.ip_address ).lookup(inc_raw=True)
+                d = ipwhois.IPWhois( self.ip_address, allow_permutations=False ).lookup(inc_raw=True)
+
             except ipwhois.HTTPLookupError:
-                print "No Whois information for '%s' because HTTPLookupError" %(self.ip_address)
+                # print "No Whois information for '%s' because HTTPLookupError." %(self.ip_address)
+                logging_file.error( "No Whois information for '{0}' because HTTPLookupError.".format(self.ip_address) )
                 data = null_whois_info()
                 data['whois'].update( { 'error': 'yes' } )
+                data['whois'].update( { 'error_message': "No Whois information for '%s' because HTTPLookupError." %(self.ip_address) } )
                 return data
+
             except ipwhois.WhoisLookupError:
-                print "No Whois information for '%s' because WhoisLookupError" %(self.ip_address)
+                # print "No Whois information for '%s' because WhoisLookupError" %(self.ip_address)
+                logging_file.error( "No Whois information for '{0}' because WhoisLookupError.".format(self.ip_address) )
                 data = null_whois_info()
                 data['whois'].update( { 'error': 'yes' } )
+                data['whois'].update( { 'error_message': "No Whois information for '%s' because WhoisLookupError." %(self.ip_address) } )
                 return data
+
             except (ipwhois.ASNLookupError, ipwhois.ASNRegistryError):
-                print "No Whois information for '%s' because ASNLookupError" %(self.ip_address)
+                # print "No ASN information for '{0}' because ASNLookupError.".format( self.ip_address )
+                logging_file.error( "No ASN & Whois information for '{0}' because ASNLookupError.".format(self.ip_address) )
                 data = null_whois_info()
                 data['whois'].update( { 'error': 'yes' } )
+                data['whois'].update( { 'error_message': "No ASN & Whois information for '%s' because ASNLookupError." %(self.ip_address) } )
                 return data
 
             # AS Number
             try:
-                asn = [ int(a) for a in d.get('asn').split(' ') ]
-                data['whois']['as'].update( { 'number':  asn } )
-            except (ValueError, TypeError):
-                data['whois']['as'].update( { 'number':  None } )
+                # asnum = [ int(a) for a in d.get('asn').split(' ')[0] ] #TODO:Remove eventually
+                asnum = [ int(a) for a in d.get('asn').split(' ') ][0] #Only grab the first one, do not want to make this a list anymore
+                data['whois']['as'].update( { 'number':  asnum } )
+                as_num_failure = False
+
+            except (ValueError, TypeError, UnboundLocalError) as error:
+                logging_file.error( 'No ASNumber from whois information for "{0}". Due to:\n{1}'.format( self.ip_address, error ) )
+                as_num_failure = True
+
+            # Get ASN Information from Maxmind DB in case of AS Number error and to get AS Name because that is not populated from whois anyways
+            as_maxmind = geoipv4_as.asn_by_addr( self.ip_address )
+            if as_maxmind:
+                as_maxmind = as_maxmind.decode('utf-8', "replace")
+                # Assign it as a regex group
+                as_info = re.search( asn_info_regex, as_maxmind.encode('utf-8') )
+
+                try:
+                    # Get ASNumber
+                    asnum_maxmind = int( as_info.group(1) )
+                    if as_num_failure:  # Assign ASNumber from maxmind if whois ASNumber grab failed
+                        data['whois']['as'].update( { 'number':  asnum_maxmind } )
+
+                    # Get ASName
+                    asname_maxmind = as_info.group(2)
+                    data['whois']['as'].update( { 'name':  asname_maxmind } )
+
+                except (ValueError, TypeError) as error:
+                    logging_file.error( 'No Maxmind AS information for "{0}". Due to:\n{1}'.format( self.ip_address, error ) )
+                    if as_num_failure: #Only assign none for ASNumber if not already grabbed
+                        data['whois']['as'].update( { 'number':  None } )
+                    data['whois']['as'].update( {'name': None} )
+
+            else:
+                logging_file.info( 'No Maxmind AS information for "{0}" could be found in the database.'.format(self.ip_address) )
+                if as_num_failure: #Only assign none for ASNumber if not already grabbed
+                    data['whois']['as'].update( { 'number':  None } )
+                data['whois']['as'].update( {'name': None} )
+
             # AS Country Code
             data['whois']['as'].update( { 'country_code': d.get('asn_country_code') } )
+
             # AS Registry
             data['whois']['as'].update( { 'registry': d.get('asn_registry') } )
+
             # AS CIDR
             as_cidr = d.get('asn_cidr')
             if as_cidr != 'NA':
                 data['whois']['as'].update( { 'cidr': as_cidr } )
             else:
                  data['whois']['as'].update( { 'cidr': None } )
-            #AS Creation Date
+
+            # AS Creation Date
             data['whois']['as'].update( { 'creation_date': time_info.convert_time( d.get('asn_date') ).convert_to_utc() } )
-            # AS Name
-            asn_response = geoipv4_as.asn_by_addr( self.ip_address )
-            if asn_response:
-                asn_info = re.search( asn_info_regex, asn_response.decode('utf-8', "replace") )
-                try:
-                    # asnum = int ( asn_info.group(2) ) #Do not need, because grabbed via Cyrmu lookup
-                    name = asn_info.group(3)
-                    data['whois']['as'].update( { 'name': name } )
-                except (ValueError, TypeError):
-                    print 'Error grabbing AS Name for %s', self.ip_address
-                    data['whois']['as'].update( {'name': None} )
-            else:
-                print 'No AS Name result for %s' %self.ip_address
-                data['whois']['as'].update( {'name': None} )
 
             # Registration Information by Subnet
             for registration in d.get('nets'):
                 reg = dict()
+
                 # Country Code
                 reg.update( { 'country_code': registration.get('country') } )
+
                 # City
                 reg.update( { 'city': registration.get('city') } )
+
                 # State
                 reg.update( { 'state': registration.get('state') } )
+
                 # CIDR
                 cidr = registration.get('cidr')
                 reg.update( { 'cidr': cidr } )
-                #Range
+
+                # Range
                 try:
                     range = '%s-%s'%(netaddr.IPNetwork(cidr).network, netaddr.IPNetwork(cidr).broadcast)
                     reg.update( { 'range': range } )
+
                 except ValueError:
                     reg.update( { 'range': None } )
+
                 # Description
                 reg.update( { 'description': registration.get( 'description' ) } )
+
                 # Name
                 reg.update( { 'name': registration.get('name') } )
+
                 # Handle
                 reg.update( { 'handle': registration.get('handle') } )
+
                 # Updated
                 reg.update( { 'updated': time_info.convert_time( registration.get('updated') ).convert_to_utc() } )
+
                 # Created
                 reg.update( { 'creation_date': time_info.convert_time( registration.get('created') ).convert_to_utc() } )
+
                 # Postal Code
                 reg.update( { 'postal_code': registration.get('postal_code') } )
+
                 # Address
                 reg.update( { 'address': registration.get('address') } )
+
                 # Abuse Emails
                 abuse_emails = registration.get('abuse_emails')
                 if abuse_emails:
                     abuse_emails = abuse_emails.split('\n')
                 reg.update( { 'abuse_emails': abuse_emails } )
+
                 # Miscellaneous Emails
                 misc_emails = registration.get('misc_emails')
                 if misc_emails:
                     misc_emails = misc_emails.split('\n')
                 reg.update( { 'misc_emails': misc_emails } )
+
                 # Tech Emails
                 tech_emails = registration.get('tech_emails')
                 if tech_emails:
                     tech_emails = tech_emails.split('\n')
                 reg.update( { 'tech_emails': tech_emails } )
+
                 #TODO:Sub referrals
 
                 # Update reg information
@@ -389,7 +457,7 @@ class IPInformation:
             # Add Raw WhoIs
             data['whois'].update( { 'raw': d.get('raw') } )
 
-            # Reverse IP
+            # Reverse IP / PTR Record
             try:
                 reverse_ip = ipwhois.Net(self.ip_address).get_host()[0]
                 data['whois'].update( { 'reverse_ip': reverse_ip } )
@@ -402,12 +470,56 @@ class IPInformation:
 
         # Assign all null values if not public IP
         else:
-            print 'No Whois information for "%s" because it is not a public IP Address.' %self.ip_address
+            # print 'No Whois information for "%s" because it is not a public IP Address.' %self.ip_address
+            logging_file.info( "No Whois information for '{0}' because it is not a public IP Address.".format(self.ip_address) )
             data = null_whois_info()
+
+        return data
+
+    def maxmind_AS(self):
+        """
+        Use Maxmind DB to gather ASName and ASNumber instead of doing a network lookup for it.
+        >>> from ipinformation import IPInformation
+        >>> from pprint import pprint
+        >>> pprint( IPInformation(ip_address='8.8.8.8').maxmind_AS() )
+        {'as': {'name': 'Google Inc.', 'number': 15169}}
+        """
+
+        # Create dictionary for data to return
+        data = { 'as': {} }
+
+        # Query Maxmind DB for info
+        as_maxmind = geoipv4_as.asn_by_addr( self.ip_address )
+
+        if as_maxmind:
+            as_maxmind = as_maxmind.decode('utf-8', "replace")
+            # Assign it as a regex group
+            as_info = re.search( asn_info_regex, as_maxmind.encode('utf-8') )
+
+            try:
+                # Get ASNumber
+                asnum_maxmind = int( as_info.group(1) )
+                data['as'].update( { 'number':  asnum_maxmind } )
+
+                # Get ASName
+                asname_maxmind = as_info.group(2)
+                data['as'].update( { 'name':  asname_maxmind } )
+
+            except (ValueError, TypeError) as error:
+                logging_file.error( 'No Maxmind AS information for "{0}". Due to:\n{1}'.format( self.ip_address, error ) )
+                data['as'].update( { 'number':  None } )
+                data['as'].update( { 'name': None} )
+
+        else:
+            logging_file.info( 'No Maxmind AS information for "{0}" could be found in the database.'.format(self.ip_address) )
+            data['as'].update( { 'number':  None } )
+            data['as'].update( { 'name': None} )
+
         return data
 
     def all(self):
-        """all( ) = Return general, geo, and whois information for an IP Address
+        """
+        Return general, geo, and whois information for an IP Address
         >>> from ipinformation import IPInformation
         >>> from pprint import pprint
         >>> pprint( IPInformation(ip_address='8.8.8.8').all() )
@@ -433,7 +545,7 @@ class IPInformation:
                           'country_code': 'US',
                           'creation_date': None,
                           'name': u'Google Inc.',
-                          'number': [15169],
+                          'number': 15169,
                           'registry': 'arin'},
                    'raw': '\n#\n# ARIN WHOIS data and services are subject to the Terms of Use\n# available at: https://www.arin.net/whois_tou.html\n#\n# If you see inaccuracies in the results, please report at\n# http://www.arin.net/public/whoisinaccuracy/index.xhtml\n#\n\n\n#\n# The following results may also be obtained via:\n# http://whois.arin.net/rest/nets;q=8.8.4.4?showDetails=true&showARIN=false&showNonArinTopLevelNet=false&ext=netref2\n#\n\n\n# start\n\nNetRange:       8.0.0.0 - 8.255.255.255\nCIDR:           8.0.0.0/8\nNetName:        LVLT-ORG-8-8\nNetHandle:      NET-8-0-0-0-1\nParent:          ()\nNetType:        Direct Allocation\nOriginAS:       \nOrganization:   Level 3 Communications, Inc. (LVLT)\nRegDate:        1992-12-01\nUpdated:        2012-02-24\nRef:            http://whois.arin.net/rest/net/NET-8-0-0-0-1\n\n\n\nOrgName:        Level 3 Communications, Inc.\nOrgId:          LVLT\nAddress:        1025 Eldorado Blvd.\nCity:           Broomfield\nStateProv:      CO\nPostalCode:     80021\nCountry:        US\nRegDate:        1998-05-22\nUpdated:        2012-01-30\nComment:        ADDRESSES WITHIN THIS BLOCK ARE NON-PORTABLE\nRef:            http://whois.arin.net/rest/org/LVLT\n\n\nOrgTechHandle: IPADD5-ARIN\nOrgTechName:   ipaddressing\nOrgTechPhone:  +1-877-453-8353 \nOrgTechEmail:  ipaddressing@level3.com\nOrgTechRef:    http://whois.arin.net/rest/poc/IPADD5-ARIN\n\nOrgNOCHandle: NOCSU27-ARIN\nOrgNOCName:   NOC Support\nOrgNOCPhone:  +1-877-453-8353 \nOrgNOCEmail:  noc.coreip@level3.com\nOrgNOCRef:    http://whois.arin.net/rest/poc/NOCSU27-ARIN\n\nOrgAbuseHandle: APL8-ARIN\nOrgAbuseName:   Abuse POC LVLT\nOrgAbusePhone:  +1-877-453-8353 \nOrgAbuseEmail:  abuse@level3.com\nOrgAbuseRef:    http://whois.arin.net/rest/poc/APL8-ARIN\n\n# end\n\n\n# start\n\nNetRange:       8.8.4.0 - 8.8.4.255\nCIDR:           8.8.4.0/24\nNetName:        LVLT-GOGL-8-8-4\nNetHandle:      NET-8-8-4-0-1\nParent:         LVLT-ORG-8-8 (NET-8-0-0-0-1)\nNetType:        Reallocated\nOriginAS:       \nOrganization:   Google Inc. (GOGL)\nRegDate:        2014-03-14\nUpdated:        2014-03-14\nRef:            http://whois.arin.net/rest/net/NET-8-8-4-0-1\n\n\n\nOrgName:        Google Inc.\nOrgId:          GOGL\nAddress:        1600 Amphitheatre Parkway\nCity:           Mountain View\nStateProv:      CA\nPostalCode:     94043\nCountry:        US\nRegDate:        2000-03-30\nUpdated:        2015-11-06\nRef:            http://whois.arin.net/rest/org/GOGL\n\n\nOrgAbuseHandle: ABUSE5250-ARIN\nOrgAbuseName:   Abuse\nOrgAbusePhone:  +1-650-253-0000 \nOrgAbuseEmail:  network-abuse@google.com\nOrgAbuseRef:    http://whois.arin.net/rest/poc/ABUSE5250-ARIN\n\nOrgTechHandle: ZG39-ARIN\nOrgTechName:   Google Inc\nOrgTechPhone:  +1-650-253-0000 \nOrgTechEmail:  arin-contact@google.com\nOrgTechRef:    http://whois.arin.net/rest/poc/ZG39-ARIN\n\n# end\n\n\n\n#\n# ARIN WHOIS data and services are subject to the Terms of Use\n# available at: https://www.arin.net/whois_tou.html\n#\n# If you see inaccuracies in the results, please report at\n# http://www.arin.net/public/whoisinaccuracy/index.xhtml\n#\n\n',
                    'error': 'no',
@@ -514,7 +626,8 @@ class IPInformation:
                    'reverse_ip': None}}
         """
         if not self.is_ip():
-            print '"%s" is not a valid IP Address.' %self.ip_address
+            # print '"%s" is not a valid IP Address.' %self.ip_address
+            logging_file.error( '"{0}" is not a valid IP Address.'.format(self.ip_address) )
             return None
         data = dict()
         data.update(self.general_info())
