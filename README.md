@@ -180,7 +180,7 @@ Gather AS Name and Number from local Maxmind Database
         maxmind_AS ( ) = Use Maxmind DB to gather ASName and ASNumber instead of doing a network lookup for it.
         >>> from ipinformation import IPInformation
         >>> from pprint import pprint
-        >>> pprint( IPInformation(ip_address='8.8.8.8').maxmind_as_info() )
+        >>> pprint( IPInformation(ip_address='8.8.8.8').maxmind_AS() )
         {'as': {'name': 'Google Inc.', 'number': 15169}}
 All Information / Put everything together
 -----------------------------------------
