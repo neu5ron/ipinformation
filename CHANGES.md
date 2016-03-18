@@ -1,5 +1,9 @@
 Changelog
 =========
+1.0.8 (2016-03-17)
+-------------------
+-FML...array geo-points are [longitude,latitude]—the opposite order!
+
 1.0.7 (2016-03-14)
 -------------------
 -With ipwhois version 0.11.2 allows to not use whois for cyrmu and only dns in order to not get blacklisted and if it fails.

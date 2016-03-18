@@ -192,7 +192,7 @@ class IPInformation:
             longitude = city_information.get('longitude')
             # latitude = float(city_information.get('latitude'))#TESTING
             latitude = city_information.get('latitude')
-            coordinates = [ latitude, longitude  ]
+            coordinates = [ longitude, latitude ]
             data['geo'].update( { 'coordinates': coordinates } )
 
         # Assign all null values if not public IP
