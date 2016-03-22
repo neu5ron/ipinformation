@@ -47,7 +47,7 @@ class IPInformation:
         elif netaddr.valid_ipv6( self.ip_address ):
             return True
         else:
-            print '"%s" is not a valid IP Address.' %self.ip_address
+            # print '"%s" is not a valid IP Address.' %self.ip_address
             return False
 
     def is_public(self):
