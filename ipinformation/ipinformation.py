@@ -164,7 +164,7 @@ class IPInformation:
                              'asnum': None,
                              'city': None,
                              'continent': None,
-                             'coordinates': [None, None],
+                             'coordinates': None,
                              'country_code': None,
                              'country_code3': None,
                              'country_name': None,
@@ -194,7 +194,7 @@ class IPInformation:
                 "country_code": None,
                 "asname": None,
                 "latitude": None,
-                "coordinates": [ None, None ],
+                "coordinates": None,
                 "continent": None
             }
             return d
@@ -622,7 +622,7 @@ class IPInformation:
                              'asnum': None,
                              'city': None,
                              'continent': None,
-                             'coordinates': [None, None],
+                             'coordinates': None,
                              'country_code': None,
                              'country_code3': None,
                              'country_name': None,
