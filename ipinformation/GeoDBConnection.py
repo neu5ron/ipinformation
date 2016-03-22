@@ -95,7 +95,7 @@ class GeoIPDB():
             need_to_download = True
 
         if need_to_download:
-            # print '%s file needs to be updated or does not exist!\nTrying to download it to %s/%s\n'%( variable_name, geoip_directory, filename )
+            print '%s file needs to be updated or does not exist!\nTrying to download it to %s/%s\n'%( variable_name, geoip_directory, filename )
             logging_file.info( '{0} file needs to be updated or does not exist! Trying to download it to "{1}/{2}"'.format( variable_name, geoip_directory, filename ) )
             try:
                 requests.packages.urllib3.disable_warnings()
@@ -110,27 +110,27 @@ class GeoIPDB():
                 downloaded_file.close()
 
             except IOError as error:
-                print 'Could not download and write GeoIP database due to %s.\n'%error
+                print 'Could not download and write GeoIP database. Due to:\n{0}'.format( error )
                 logging_file.error( 'Could not download and write GeoIP database. Due to:\n{0}'.format( error ) )
                 sys.exit(1)
 
             except requests.HTTPError as error:
-                print 'Could not download and write GeoIP database due to %s.\n'%error
+                print 'Could not download and write GeoIP database. Due to:\n{0}'.format( error )
                 logging_file.error( 'Could not download and write GeoIP database. Due to:\n{0}'.format( error ) )
                 sys.exit(1)
 
             except requests.Timeout as error:
-                print 'Could not download and write GeoIP database due to %s.\n'%error
+                print 'Could not download and write GeoIP database. Due to:\n{0}'.format( error )
                 logging_file.error( 'Could not download and write GeoIP database. Due to:\n{0}'.format( error ) )
                 sys.exit(1)
 
             except requests.TooManyRedirects as error:
-                print 'Could not download and write GeoIP database due to %s.\n'%error
+                print 'Could not download and write GeoIP database. Due to:\n{0}'.format( error )
                 logging_file.error( 'Could not download and write GeoIP database. Due to:\n{0}'.format( error ) )
                 sys.exit(1)
 
             except requests.ConnectionError as error:
-                print 'Could not download and write GeoIP database due to %s.\n'%error
+                print 'Could not download and write GeoIP database. Due to:\n{0}'.format( error )
                 logging_file.error( 'Could not download and write GeoIP database. Due to:\n{0}'.format( error ) )
                 sys.exit(1)
 

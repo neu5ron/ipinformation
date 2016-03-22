@@ -2,7 +2,7 @@ Changelog
 =========
 1.0.9 (2016-03-22)
 -------------------
--Some IPs returning none for geoip
+-Some IPs returning none for maxmind geoip
 
 1.0.8 (2016-03-17)
 -------------------

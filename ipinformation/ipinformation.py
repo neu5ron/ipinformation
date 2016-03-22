@@ -28,8 +28,6 @@ class IPInformation:
         try:
             self.ip_address = self.ip_address.encode('ascii')
         except ( UnicodeEncodeError, ValueError, AttributeError) as error:
-            # print error
-            # print '"%s" is not valid. The IP Address should be input as an ascii string.\n'%self.ip_address.encode('utf8','replace')
             print u'{0} is not valid. It should be input as an ascii string.'.format( unicode(self.ip_address) )
             logging_file.error( u'{0} is not valid. It should be input as an ascii string.'.format( unicode(self.ip_address) ) )
             raise ValueError
@@ -78,7 +76,7 @@ class IPInformation:
             return True
         else: #Unknown Type
             return False
-            # print '"%s" is an unknown IP Address.' %self.ip_address
+            print '"%s" is an unknown IP Address.' %self.ip_address
             logging_file.error( '"{0}" is an unknown IP Address.'.format(self.ip_address) )
 
     def general_info(self):
@@ -152,6 +150,7 @@ class IPInformation:
                  'country_code': 'US',
                  'country_code3': 'USA',
                  'country_name': 'United States',
+                 'error': 'no',
                  'dma_code': 807,
                  'latitude': 37.3845,
                  'longitude': -122.0881,
@@ -170,6 +169,7 @@ class IPInformation:
                              'country_code3': None,
                              'country_name': None,
                              'dma_code': None,
+                             'error': 'no',
                              'latitude': None,
                              'longitude': None,
                              'metro_code': None,
@@ -177,6 +177,27 @@ class IPInformation:
                              'region_code': None,
                              'time_zone': None}}}
         """
+
+        def null_geo_ip():
+            d = {
+                "city": None,
+                "region_code": None,
+                "asnum": None,
+                "area_code": None,
+                "time_zone": None,
+                "dma_code": None,
+                "metro_code": None,
+                "country_code3": None,
+                "country_name": None,
+                "postal_code": None,
+                "longitude": None,
+                "country_code": None,
+                "asname": None,
+                "latitude": None,
+                "coordinates": [ None, None ],
+                "continent": None
+            }
+            return d
 
         if not self.is_ip():
             # print '"%s" is not a valid IP Address.' %self.ip_address
@@ -190,19 +211,23 @@ class IPInformation:
 
             if city_information:
                 data['geo'].update(city_information)
-                # longitude = float(city_information.get('longitude'))#TESTING
                 longitude = city_information.get('longitude')
-                # latitude = float(city_information.get('latitude'))#TESTING
                 latitude = city_information.get('latitude')
                 coordinates = [ longitude, latitude ]
                 data['geo'].update( { 'coordinates': coordinates } )
-            else:#TEST
-                print self.ip_address#TEST
+                data['geo'].update( { 'error': 'no' } )
+
+            # Assign all null values if IP not found in Maxmind DB
+            else:
+                data['geo'].update(null_geo_ip())
+                data['geo'].update( { 'error': 'yes' } )
+                print 'No Maxmind GeoIP information for "{0}".'.format(self.ip_address)
+                logging_file.info( 'No Maxmind GeoIP information for "{0}".'.format(self.ip_address) )
 
         # Assign all null values if not public IP
         else:
-            geoip_info = { 'general': { "city": None, "region_code": None, "asnum": None, "area_code": None, "time_zone": None, "dma_code": None, "metro_code": None, "country_code3": None, "country_name": None, "postal_code": None, "longitude": None, "country_code": None, "asname": None, "latitude": None, "coordinates": [ None, None ], "continent": None } }
-            data['geo'].update(geoip_info)
+            data['geo'].update(null_geo_ip())
+            data['geo'].update({ 'error': 'no' })
 
         #TODO:Finish IPv6
 
@@ -310,7 +335,7 @@ class IPInformation:
                 d = ipwhois.IPWhois( self.ip_address, allow_permutations=False ).lookup(inc_raw=True)
 
             except ipwhois.HTTPLookupError:
-                # print "No Whois information for '%s' because HTTPLookupError." %(self.ip_address)
+                print "No Whois information for '%s' because HTTPLookupError." %(self.ip_address)
                 logging_file.error( "No Whois information for '{0}' because HTTPLookupError.".format(self.ip_address) )
                 data = null_whois_info()
                 data['whois'].update( { 'error': 'yes' } )
@@ -318,7 +343,7 @@ class IPInformation:
                 return data
 
             except ipwhois.WhoisLookupError:
-                # print "No Whois information for '%s' because WhoisLookupError" %(self.ip_address)
+                print "No Whois information for '%s' because WhoisLookupError" %(self.ip_address)
                 logging_file.error( "No Whois information for '{0}' because WhoisLookupError.".format(self.ip_address) )
                 data = null_whois_info()
                 data['whois'].update( { 'error': 'yes' } )
@@ -326,7 +351,7 @@ class IPInformation:
                 return data
 
             except (ipwhois.ASNLookupError, ipwhois.ASNRegistryError):
-                # print "No ASN information for '{0}' because ASNLookupError.".format( self.ip_address )
+                print "No ASN information for '{0}' because ASNLookupError.".format( self.ip_address )
                 logging_file.error( "No ASN & Whois information for '{0}' because ASNLookupError.".format(self.ip_address) )
                 data = null_whois_info()
                 data['whois'].update( { 'error': 'yes' } )
@@ -539,6 +564,7 @@ class IPInformation:
                  'country_code3': 'USA',
                  'country_name': 'United States',
                  'dma_code': 807,
+                 'error': 'no',
                  'latitude': 37.3845,
                  'longitude': -122.0881,
                  'metro_code': 'San Francisco, CA',
@@ -601,6 +627,7 @@ class IPInformation:
                              'country_code3': None,
                              'country_name': None,
                              'dma_code': None,
+                             'error': 'no',
                              'latitude': None,
                              'longitude': None,
                              'metro_code': None,
