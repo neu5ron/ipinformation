@@ -47,6 +47,7 @@ class IPInformation:
         elif netaddr.valid_ipv6( self.ip_address ):
             return True
         else:
+            print '"%s" is not a valid IP Address.' %self.ip_address
             return False
 
     def is_public(self):
@@ -59,25 +60,29 @@ class IPInformation:
             False
         """
 
-        ip_addr = netaddr.IPAddress(self.ip_address)
-        if ip_addr.is_private():
+        if self.is_ip():
+            ip_addr = netaddr.IPAddress(self.ip_address)
+
+            if ip_addr.is_private():
+                return False
+            elif ip_addr.is_multicast():
+                return False
+            elif ip_addr.is_loopback():
+                return False
+            elif ip_addr.is_netmask():
+                return False
+            elif ip_addr.is_reserved():
+                return False
+            elif ip_addr.is_link_local():
+                return False
+            elif ip_addr.is_unicast():
+                return True
+            else: #Unknown Type
+                return False
+                print '"%s" is an unknown IP Address.' %self.ip_address
+                logging_file.error( '"{0}" is an unknown IP Address.'.format(self.ip_address) )
+        else:
             return False
-        elif ip_addr.is_multicast():
-            return False
-        elif ip_addr.is_loopback():
-            return False
-        elif ip_addr.is_netmask():
-            return False
-        elif ip_addr.is_reserved():
-            return False
-        elif ip_addr.is_link_local():
-            return False
-        elif ip_addr.is_unicast():
-            return True
-        else: #Unknown Type
-            return False
-            print '"%s" is an unknown IP Address.' %self.ip_address
-            logging_file.error( '"{0}" is an unknown IP Address.'.format(self.ip_address) )
 
     def general_info(self):
         """
@@ -513,34 +518,37 @@ class IPInformation:
         >>> pprint( IPInformation(ip_address='8.8.8.8').maxmind_AS() )
         {'as': {'name': 'Google Inc.', 'number': 15169}}
         """
-
         # Create dictionary for data to return
         data = { 'as': {} }
 
-        # Query Maxmind DB for info
-        as_maxmind = geoipv4_as.asn_by_addr( self.ip_address )
+        if self.is_public():#
+            # Query Maxmind DB for info
+            as_maxmind = geoipv4_as.asn_by_addr( self.ip_address )
 
-        if as_maxmind:
-            as_maxmind = as_maxmind.decode('utf-8', "replace")
-            # Assign it as a regex group
-            as_info = re.search( asn_info_regex, as_maxmind.encode('utf-8') )
+            if as_maxmind:
+                as_maxmind = as_maxmind.decode('utf-8', "replace")
+                # Assign it as a regex group
+                as_info = re.search( asn_info_regex, as_maxmind.encode('utf-8') )
 
-            try:
-                # Get ASNumber
-                asnum_maxmind = int( as_info.group(1) )
-                data['as'].update( { 'number':  asnum_maxmind } )
+                try:
+                    # Get ASNumber
+                    asnum_maxmind = int( as_info.group(1) )
+                    data['as'].update( { 'number':  asnum_maxmind } )
 
-                # Get ASName
-                asname_maxmind = as_info.group(2)
-                data['as'].update( { 'name':  asname_maxmind } )
+                    # Get ASName
+                    asname_maxmind = as_info.group(2)
+                    data['as'].update( { 'name':  asname_maxmind } )
 
-            except (ValueError, TypeError) as error:
-                logging_file.error( 'No Maxmind AS information for "{0}". Due to:\n{1}'.format( self.ip_address, error ) )
+                except (ValueError, TypeError) as error:
+                    logging_file.error( 'No Maxmind AS information for "{0}". Due to:\n{1}'.format( self.ip_address, error ) )
+                    data['as'].update( { 'number':  None } )
+                    data['as'].update( { 'name': None} )
+
+            else:
+                logging_file.info( 'No Maxmind AS information for "{0}" could be found in the database.'.format(self.ip_address) )
                 data['as'].update( { 'number':  None } )
                 data['as'].update( { 'name': None} )
-
         else:
-            logging_file.info( 'No Maxmind AS information for "{0}" could be found in the database.'.format(self.ip_address) )
             data['as'].update( { 'number':  None } )
             data['as'].update( { 'name': None} )
 
