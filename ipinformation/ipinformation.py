@@ -187,13 +187,17 @@ class IPInformation:
 
         if self.is_public():
             city_information = geoipv4_city.record_by_addr(self.ip_address)
-            data['geo'].update(city_information)
-            # longitude = float(city_information.get('longitude'))#TESTING
-            longitude = city_information.get('longitude')
-            # latitude = float(city_information.get('latitude'))#TESTING
-            latitude = city_information.get('latitude')
-            coordinates = [ longitude, latitude ]
-            data['geo'].update( { 'coordinates': coordinates } )
+
+            if city_information:
+                data['geo'].update(city_information)
+                # longitude = float(city_information.get('longitude'))#TESTING
+                longitude = city_information.get('longitude')
+                # latitude = float(city_information.get('latitude'))#TESTING
+                latitude = city_information.get('latitude')
+                coordinates = [ longitude, latitude ]
+                data['geo'].update( { 'coordinates': coordinates } )
+            else:#TEST
+                print self.ip_address#TEST
 
         # Assign all null values if not public IP
         else:

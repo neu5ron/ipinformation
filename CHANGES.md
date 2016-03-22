@@ -1,5 +1,9 @@
 Changelog
 =========
+1.0.9 (2016-03-22)
+-------------------
+-Some IPs returning none for geoip
+
 1.0.8 (2016-03-17)
 -------------------
 -FML...array geo-points are [longitude,latitude]—the opposite order!
