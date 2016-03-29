@@ -336,8 +336,9 @@ class IPInformation:
             #TODO:What about noc, tech, and abuse information
             data = { 'whois': { 'as': {} } }
 
+            # Perform whois lookup for IP and DNS query for AS information and disable whois for AS information.
             try:
-                d = ipwhois.IPWhois( self.ip_address, allow_permutations=False ).lookup(inc_raw=True)
+                d = ipwhois.IPWhois( self.ip_address, allow_permutations=False ).lookup_whois(inc_raw=True)
 
             except ipwhois.HTTPLookupError:
                 print "No Whois information for '%s' because HTTPLookupError." %(self.ip_address)

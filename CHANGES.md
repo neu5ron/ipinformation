@@ -1,5 +1,9 @@
 Changelog
 =========
+1.0.9 (2016-03-29)
+-------------------
+-Changed to lookup_whois function for ipwhois as old one is going to eventually be removed
+
 1.0.9 (2016-03-22)
 -------------------
 -Some IPs returning none for maxmind geoip
