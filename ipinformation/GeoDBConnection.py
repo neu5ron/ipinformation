@@ -16,7 +16,7 @@ geoip_directory = os.path.join( base_directory, 'GeoIP' )
 ########################################
 
 # Set logging
-log_file = os.path.join ( os.path.realpath( os.path.join( __file__, '..' ) ), 'ipinformation.log' )
+log_file = os.path.join ( os.path.join( '/tmp', 'ipinformation.log' ) )
 logging_file = logging.getLogger(__name__)
 logging_file.setLevel(logging.DEBUG)
 logging_file_handler = handlers.RotatingFileHandler( log_file, maxBytes=5, backupCount=0  )
