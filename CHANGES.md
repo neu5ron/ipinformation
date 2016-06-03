@@ -1,5 +1,9 @@
 Changelog
 =========
+1.0.12 (2016-06-03)
+-------------------
+-Except AttributeError if unable to find AS in Maxmind DB
+
 1.0.11 (2016-04-10)
 -------------------
 -Log fix

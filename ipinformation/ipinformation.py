@@ -540,7 +540,7 @@ class IPInformation:
                     asname_maxmind = as_info.group(2)
                     data['as'].update( { 'name':  asname_maxmind } )
 
-                except (ValueError, TypeError) as error:
+                except (ValueError, TypeError, AttributeError) as error:
                     logging_file.error( 'No Maxmind AS information for "{0}". Due to:\n{1}'.format( self.ip_address, error ) )
                     data['as'].update( { 'number':  None } )
                     data['as'].update( { 'name': None} )
