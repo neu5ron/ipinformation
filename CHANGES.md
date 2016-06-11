@@ -1,5 +1,10 @@
 Changelog
 =========
+1.0.13 (2016-06-11)
+-------------------
+-Except AttributeError if unable to find AS in Maxmind DB
+-Added Team Cymru AS Lookup
+
 1.0.12 (2016-06-03)
 -------------------
 -Except AttributeError if unable to find AS in Maxmind DB

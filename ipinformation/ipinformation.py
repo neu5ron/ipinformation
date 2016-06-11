@@ -6,6 +6,7 @@ import re
 import ipwhois
 from datetime import datetime
 from GeoDBConnection import logging_file
+import dns
 
 # Regex for ASN Number and Name
 asn_info_regex = re.compile(r'AS(\d+) (.*)')
@@ -392,7 +393,7 @@ class IPInformation:
                     asname_maxmind = as_info.group(2)
                     data['whois']['as'].update( { 'name':  asname_maxmind } )
 
-                except (ValueError, TypeError) as error:
+                except (ValueError, TypeError, AttributeError) as error:
                     logging_file.error( 'No Maxmind AS information for "{0}". Due to:\n{1}'.format( self.ip_address, error ) )
                     if as_num_failure: #Only assign none for ASNumber if not already grabbed
                         data['whois']['as'].update( { 'number':  None } )
@@ -554,6 +555,63 @@ class IPInformation:
             data['as'].update( { 'name': None} )
 
         return data
+
+    def cymru_AS(self):
+        """
+        Use Team Cymru "$IPReversed.origin.asn.cymru.com' to gather ASName and ASNumber via DNS Lookup
+        >>> from ipinformation import IPInformation
+        >>> from pprint import pprint
+        >>> pprint( IPInformation(ip_address='8.8.8.8').cymru_AS() )
+        {'as': {'cidr': '8.8.8.0/24',
+                'country_code': 'US',
+                'creation_date': '',
+                'number': 15169,
+                'registry': 'arin'}}
+        """
+
+        # Reverse the IP
+        ip_split = self.ip_address.split('.')
+        ip_split.reverse()
+        ip_reversed = '.'.join(ip_split)
+        # Set dns lookup
+        cymru_lookup_srv = '{0}.origin.asn.cymru.com'
+        lookup = cymru_lookup_srv.format(ip_reversed)
+         # Create dictionary for data to return
+        data = { 'as': {} }
+
+        try:
+            # Perform lookup
+            response = dns.resolver.query(lookup, 'TXT')
+            # Split response by '|' which is how Team Cymru formats it
+            response_split = str(response[0]).split('|')
+
+            data['as'].update( { 'number':  int( response_split[0].strip( ' "\n' ) ) } )
+            data['as'].update( { 'cidr':  response_split[1].strip( ' "\n' ) } )
+            data['as'].update( { 'country_code':  response_split[2].strip( ' "\n' ) } )
+            data['as'].update( { 'registry':  response_split[3].strip( ' "\n' ) } )
+            data['as'].update( { 'creation_date':  response_split[4].strip( ' "\n' ) } )
+            return data
+
+        except (dns.resolver.NXDOMAIN, dns.resolver.NoNameservers, dns.resolver.NoAnswer, dns.exception.Timeout, ValueError, TypeError, AttributeError) as error:
+            logging_file.error( '{0} in self.cymru_AS for IP: "{1}"'.format(error, self.ip_address) )
+            # Assign all data as None if error
+            data['as'].update( { 'number':  None } )
+            data['as'].update( { 'cidr':  None } )
+            data['as'].update( { 'country_code':  None } )
+            data['as'].update( { 'registry':  None } )
+            data['as'].update( { 'creation_date':  None } )
+            return data
+
+
+        except: #Unknown error
+            logging_file.error( 'Unknown error caused in self.cymru_AS for IP: "{0}"'.format(self.ip_address) )
+            # Assign all data as None if error
+            data['as'].update( { 'number':  None } )
+            data['as'].update( { 'cidr':  None } )
+            data['as'].update( { 'country_code':  None } )
+            data['as'].update( { 'registry':  None } )
+            data['as'].update( { 'creation_date':  None } )
+            return data
 
     def all(self):
         """

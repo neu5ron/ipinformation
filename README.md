@@ -27,6 +27,7 @@ Requirements
 * pip install -U netaddr; #Install network address tool
 * pip install -U ipwhois; #Install ip whois tool
 * pip install -U dateutils; #Time/Date Utility
+* pip install -U dnspython; #DNS Utility
 
 Install
 =======
