@@ -7,6 +7,7 @@ import ipwhois
 from datetime import datetime
 from GeoDBConnection import logging_file
 import dns
+from dateutil import parser
 
 # Regex for ASN Number and Name
 asn_info_regex = re.compile(r'AS(\d+) (.*)')
@@ -518,7 +519,7 @@ class IPInformation:
         >>> from ipinformation import IPInformation
         >>> from pprint import pprint
         >>> pprint( IPInformation(ip_address='8.8.8.8').maxmind_AS() )
-        {'as': {'name': 'Google Inc.', 'number': 15169}}
+        {'as': {'name': 'Google Inc.', 'number': 15169, 'error': False }}
         """
         # Create dictionary for data to return
         data = { 'as': {} }
@@ -541,18 +542,23 @@ class IPInformation:
                     asname_maxmind = as_info.group(2)
                     data['as'].update( { 'name':  asname_maxmind } )
 
+                    data['as'].update( { 'error': False } )
+
                 except (ValueError, TypeError, AttributeError) as error:
                     logging_file.error( 'No Maxmind AS information for "{0}". Due to:\n{1}'.format( self.ip_address, error ) )
                     data['as'].update( { 'number':  None } )
                     data['as'].update( { 'name': None} )
+                    data['as'].update( { 'error': True } )
 
             else:
                 logging_file.info( 'No Maxmind AS information for "{0}" could be found in the database.'.format(self.ip_address) )
                 data['as'].update( { 'number':  None } )
                 data['as'].update( { 'name': None} )
+                data['as'].update( { 'error': True} )
         else:
             data['as'].update( { 'number':  None } )
             data['as'].update( { 'name': None} )
+            data['as'].update( { 'error': True } )
 
         return data
 
@@ -567,6 +573,7 @@ class IPInformation:
                 'creation_date': '',
                 'number': 15169,
                 'registry': 'arin'}}
+                'error': False}}
         """
 
         # Reverse the IP
@@ -590,9 +597,10 @@ class IPInformation:
             data['as'].update( { 'country_code':  response_split[2].strip( ' "\n' ) } )
             data['as'].update( { 'registry':  response_split[3].strip( ' "\n' ) } )
             data['as'].update( { 'creation_date':  response_split[4].strip( ' "\n' ) } )
+            data['as'].update( { 'error': False} )
             return data
 
-        except (dns.resolver.NXDOMAIN, dns.resolver.NoNameservers, dns.resolver.NoAnswer, dns.exception.Timeout, ValueError, TypeError, AttributeError) as error:
+        except (ValueError, TypeError, AttributeError, dns.resolver.NXDOMAIN, dns.resolver.NoNameservers, dns.resolver.NoAnswer, dns.exception.Timeout) as error:
             logging_file.error( '{0} in self.cymru_AS for IP: "{1}"'.format(error, self.ip_address) )
             # Assign all data as None if error
             data['as'].update( { 'number':  None } )
@@ -600,6 +608,7 @@ class IPInformation:
             data['as'].update( { 'country_code':  None } )
             data['as'].update( { 'registry':  None } )
             data['as'].update( { 'creation_date':  None } )
+            data['as'].update( { 'error':  True } )
             return data
 
 
@@ -611,6 +620,7 @@ class IPInformation:
             data['as'].update( { 'country_code':  None } )
             data['as'].update( { 'registry':  None } )
             data['as'].update( { 'creation_date':  None } )
+            data['as'].update( { 'error':  True } )
             return data
 
     def all(self):
