@@ -7,10 +7,10 @@ import ipwhois
 from datetime import datetime
 from GeoDBConnection import logging_file
 import dns
-from dateutil import parser
+from dateutil import parser#TODO:Maybe finish as creation_date using date parser
 
 # Regex for ASN Number and Name
-asn_info_regex = re.compile(r'AS(\d+) (.*)')
+asn_info_regex = re.compile(r'AS(\d+)\s?(.+)?')
 
 ######## Call and Use Databases
 geoipv4_country = GeoDBConnection.GeoIPDB().geoipv4_country()
@@ -532,21 +532,25 @@ class IPInformation:
                 as_maxmind = as_maxmind.decode('utf-8', "replace")
                 # Assign it as a regex group
                 as_info = re.search( asn_info_regex, as_maxmind.encode('utf-8') )
+                # Assign no error in beginning
+                data['as'].update( { 'error': False } )
 
                 try:
                     # Get ASNumber
                     asnum_maxmind = int( as_info.group(1) )
                     data['as'].update( { 'number':  asnum_maxmind } )
 
+                except (ValueError, TypeError, AttributeError, None):
+                    data['as'].update( { 'number': None} )
+                    data['as'].update( { 'error': True } )
+
+
+                try:
                     # Get ASName
                     asname_maxmind = as_info.group(2)
-                    data['as'].update( { 'name':  asname_maxmind } )
+                    data['as'].update( { 'name': asname_maxmind} )
 
-                    data['as'].update( { 'error': False } )
-
-                except (ValueError, TypeError, AttributeError, None) as error:
-                    logging_file.error( 'No Maxmind AS information for "{0}". Due to:\n{1}'.format( self.ip_address, error ) )
-                    data['as'].update( { 'number':  None } )
+                except (ValueError, TypeError, AttributeError, None):
                     data['as'].update( { 'name': None} )
                     data['as'].update( { 'error': True } )
 
