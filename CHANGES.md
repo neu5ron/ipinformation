@@ -2,6 +2,10 @@ Changelog
 =========
 1.0.14 (2016-06-11)
 -------------------
+-none error :(
+
+1.0.14 (2016-06-11)
+-------------------
 -Added JSON 'error' if AS was successful or not
 
 1.0.13 (2016-06-11)
