@@ -6,7 +6,7 @@ ipinformation is a python package focused on combining information about an IP i
 Features
 ========
 * whois (via https://github.com/secynic/ipwhois)
-* AS Name and Number (via https://www.team-cymru.com)
+* AS Name and Number (via https://www.team-cymru.com or local Maxmind database)
 * reverse/ptr address
 * geo location (via https://www.maxmind.com)
 * version type
@@ -185,6 +185,18 @@ Gather AS Name and Number from local Maxmind Database
         >>> from pprint import pprint
         >>> pprint( IPInformation(ip_address='8.8.8.8').maxmind_AS() )
         {'as': {'name': 'Google Inc.', 'number': 15169}}
+Gather AS Information from Cymru
+-----------------------------------------
+        cymru_AS ( ) = Use Team Cymru "$IPReversed.origin.asn.cymru.com' to gather ASName and ASNumber via DNS Lookup
+        >>> from ipinformation import IPInformation
+        >>> from pprint import pprint
+        >>> pprint( IPInformation(ip_address='8.8.8.8').cymru_AS() )
+        {'as': {'cidr': '8.8.8.0/24',
+                'country_code': 'US',
+                'creation_date': '',
+                'number': 15169,
+                'registry': 'arin'}}
+                'error': False}}
 All Information / Put everything together
 -----------------------------------------
 	all( ) = Return general, geo, and whois information for an IP Address
