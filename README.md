@@ -151,7 +151,7 @@ Whois Information
 								 'state': 'CA',
 								 'tech_emails': None,
 								 'updated': datetime.datetime(2014, 3, 14, 0, 0, tzinfo=<UTC>)}],
-			   'reverse_ip': 'google-public-dns-a.google.com'}}
+			   }}
 	>>> pprint( IPInformation(ip_address='127.0.0.1').whois_info() )
 	No Whois information for '127.0.0.1' because it is not a public ip
 
@@ -175,7 +175,7 @@ Whois Information
 								 'state': None,
 								 'tech_emails': None,
 								 'updated': None}],
-			   'reverse_ip': None}}
+			   }}
 	"""
 
 Gather AS Name and Number from local Maxmind Database
@@ -197,6 +197,20 @@ Gather AS Information from Cymru
                 'number': 15169,
                 'registry': 'arin'}}
                 'error': False}}
+
+Gather PTR DNS Record
+-----------------------------------------
+        get_ptr ( ) = Get the PTR address of an IP address. Reverse IP.
+        :param DNSServer: str -- of optional DNS server to use. Otherwise uses system DNS
+        :param DNSPort: int -- of port to use on the server. Requires DNSServer. Default = 53
+        :param DNSTimeout: int/float -- of timeout in seconds. Default = 4
+        :param DNSTCP: bool -- choose True to use TCP otherwise defaults to UDP.
+        >>> from ipinformation import IPInformation
+        >>> from pprint import pprint
+        >>> pprint( IPInformation(ip_address='8.8.8.8').get_ptr() )
+        {'error': None, 'ptr_address': 'google-public-dns-a.google.com'}
+        :return: dict
+
 All Information / Put everything together
 -----------------------------------------
 	all( ) = Return general, geo, and whois information for an IP Address
@@ -260,7 +274,7 @@ All Information / Put everything together
 								 'state': 'CA',
 								 'tech_emails': None,
 								 'updated': datetime.datetime(2014, 3, 14, 0, 0, tzinfo=<UTC>)}],
-			   'reverse_ip': 'google-public-dns-a.google.com'}}
+			   }}
 	>>> pprint( IPInformation(ip_address='127.0.0.1').all() )
 	No Whois information for '127.0.0.1' because it is not a public ip
 
@@ -305,4 +319,4 @@ All Information / Put everything together
 								 'state': None,
 								 'tech_emails': None,
 								 'updated': None}],
-			   'reverse_ip': None}}
+			   }}

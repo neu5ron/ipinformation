@@ -3,7 +3,7 @@ import sys
 import io
 
 NAME = 'ipinformation'
-VERSION = '1.0.17'
+VERSION = '1.0.18'
 AUTHOR = 'neu5ron'
 AUTHOR_EMAIL = 'therealneu5ron AT gmail DOT com'
 DESCRIPTION = "Combine information about an ip address in JSON format"
@@ -31,6 +31,7 @@ else:
     INSTALL_REQUIRES.append("netaddr")
     INSTALL_REQUIRES.append("ipwhois")
     INSTALL_REQUIRES.append("dateutils")
+    INSTALL_REQUIRES.append("dnspython")
 
 setup(
     name=NAME,

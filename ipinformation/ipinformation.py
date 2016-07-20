@@ -1,9 +1,11 @@
 #!/usr/bin/env python2.7
+# -*- coding: ascii -*-
 from . import GeoDBConnection
 from . import time_info
 import netaddr
 import re
 import ipwhois
+import socket
 from datetime import datetime
 from GeoDBConnection import logging_file
 import dns
@@ -11,6 +13,8 @@ from dateutil import parser#TODO:Maybe finish as creation_date using date parser
 
 # Regex for ASN Number and Name
 asn_info_regex = re.compile(r'AS(\d+)\s?(.+)?')
+# Regex for valid IPv4
+valid_ip_regex = re.compile(r'^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$')
 
 ######## Call and Use Databases
 geoipv4_country = GeoDBConnection.GeoIPDB().geoipv4_country()
@@ -27,30 +31,42 @@ class IPInformation:
         :param ip_address:
         """
         self.ip_address = ip_address
+
         try:
             self.ip_address = self.ip_address.encode('ascii')
+
         except ( UnicodeEncodeError, ValueError, AttributeError) as error:
             print u'{0} is not valid. It should be input as an ascii string.'.format( unicode(self.ip_address) )
             logging_file.error( u'{0} is not valid. It should be input as an ascii string.'.format( unicode(self.ip_address) ) )
             raise ValueError
 
-    def is_ip(self):
+    def is_ip(self, ip_addr=None):
         """
         Return true if valid IP address return false if invalid IP address
+        :param ip_addr: optional IP to pass. Takes from root class if not specified
         >>> from ipinformation import IPInformation
         >>> print IPInformation(ip_address='8.8.8.8').is_ip()
             True
         >>> print IPInformation(ip_address='NotAnIP').is_ip()
             False
         """
+        if not ip_addr:
+            ip_addr = self.ip_address
 
-        if netaddr.valid_ipv4( self.ip_address ): #IPv4 Address
-            return True
-        elif netaddr.valid_ipv6( self.ip_address ):
-            return True
+        valid = True
+
+        if netaddr.valid_ipv4( ip_addr ): #IPv4 Address
+            if not re.match( valid_ip_regex, ip_addr ):
+                valid = False
+
+        elif netaddr.valid_ipv6( ip_addr ):
+            pass
+
         else:
-            # print '"%s" is not a valid IP Address.' %self.ip_address
-            return False
+            # print '"%s" is not a valid IP Address.' %ip_addr
+            valid = False
+
+        return valid
 
     def is_public(self):
         """
@@ -284,7 +300,7 @@ class IPInformation:
                                      'state': 'CA',
                                      'tech_emails': None,
                                      'updated': datetime.datetime(2014, 3, 14, 0, 0, tzinfo=<UTC>)}],
-                   'reverse_ip': 'google-public-dns-a.google.com'}}
+                   }}
         >>> pprint( IPInformation(ip_address='127.0.0.1').whois_info() )
         No Whois information for '127.0.0.1' because it is not a public ip
 
@@ -308,7 +324,7 @@ class IPInformation:
                                      'state': None,
                                      'tech_emails': None,
                                      'updated': None}],
-                   'reverse_ip': None}}
+                   }}
         """
         def null_whois_info():
             data = {'whois': { 'as': {'cidr': None,
@@ -331,7 +347,7 @@ class IPInformation:
                                              'state': None,
                                              'tech_emails': None,
                                              'updated': None} ],
-                           'reverse_ip': None } }
+                           } }
             return data
 
         if self.is_public():#TODO:Other stats with \n... for k,v in dict.items(): value=v.replace('\n','') dict[k]=value
@@ -495,12 +511,12 @@ class IPInformation:
             data['whois'].update( { 'raw': d.get('raw') } )
 
             # Reverse IP / PTR Record
-            try:
-                reverse_ip = ipwhois.Net(self.ip_address).get_host()[0]
-                data['whois'].update( { 'reverse_ip': reverse_ip } )
-
-            except (ipwhois.HostLookupError, IndexError):
-               data['whois'].update( { 'reverse_ip': None } )
+            # try:
+            #     reverse_ip = ipwhois.Net(self.ip_address).get_host()[0]
+            #     data['whois'].update( { 'reverse_ip': reverse_ip } )
+            #
+            # except (ipwhois.HostLookupError, IndexError):
+            #    data['whois'].update( { 'reverse_ip': None } )
 
             #Assign error status
             data['whois'].update( { 'error': 'no' } )
@@ -627,6 +643,81 @@ class IPInformation:
             data['as'].update( { 'error':  True } )
             return data
 
+    def get_ptr(self, DNSServer=None, DNSPort=53, DNSTimeout=4, DNSTCP=False):
+        """
+        Get the PTR address of an IP address.  Reverse IP
+        :param DNSServer: str -- of optional DNS server to use. Otherwise uses system DNS
+        :param DNSPort: int -- of port to use on the server. Requires DNSServer. Default = 53
+        :param DNSTimeout: int/float -- of timeout in seconds. Default = 4
+        :param DNSTCP: bool -- choose True to use TCP otherwise defaults to UDP.
+        >>> from ipinformation import IPInformation
+        >>> from pprint import pprint
+        >>> pprint( IPInformation(ip_address='8.8.8.8').get_ptr() )
+        {'error': None, 'ptr_address': 'google-public-dns-a.google.com'}
+        :return: dict
+        """
+
+        error = None
+        ptr_address = None
+
+        try:
+            # Make the IP arpa complaint for querying an IP as a dns record
+            reversed_ip = dns.reversename.from_address(self.ip_address)
+
+            # Set DNS definition
+            dns_query = dns.resolver.Resolver()
+
+            # Check DNS Timeout is valid
+            if isinstance(DNSTimeout, (int, float)):
+                # Set DNS timeout
+                dns_query.lifetime = DNSTimeout
+            else:
+                raise ValueError
+
+            # If DNS server specified set it and set port
+            if DNSServer:
+                if isinstance(DNSServer, str):
+
+                    # Make sure dns server is valid ip
+                    if not self.is_ip(DNSServer):
+                        raise ValueError
+
+                    # Set DNS server to use
+                    dns_query.nameservers = [ DNSServer ]#TODO:Eventually allow ability to choose multiple servers.. Will require timeout or whatever to try new server afterwards
+
+                    # Check DNS Port is valid
+                    if isinstance(DNSPort, int) and DNSPort in xrange(1, 65535):
+                        # Set DNS port to use to connect to server
+                        dns_query.port = DNSPort
+
+                    else:
+                        raise ValueError
+
+                else:
+                    raise ValueError
+
+            # Get address
+            ptr_address = str(dns_query.query(reversed_ip, 'PTR', tcp=DNSTCP)[0])
+
+        except IndexError:
+            error = "server response"
+
+        except dns.resolver.NXDOMAIN:
+            error = 'nxdomain'
+
+        except dns.resolver.NoAnswer:
+            error = 'noanswer'
+
+        except (dns.exception.Timeout, dns.resolver.NoNameservers):
+            error = 'timeout'
+
+        except ValueError:
+            error = 'server input'
+
+        ret = {'ptr': ptr_address, 'error': error}
+
+        return ret
+
     def all(self):
         """
         Return general, geo, and whois information for an IP Address
@@ -690,7 +781,7 @@ class IPInformation:
                                      'state': 'CA',
                                      'tech_emails': None,
                                      'updated': datetime.datetime(2014, 3, 14, 0, 0, tzinfo=<UTC>)}],
-                   'reverse_ip': 'google-public-dns-a.google.com'}}
+                   }}
         >>> pprint( IPInformation(ip_address='127.0.0.1').all() )
         No Whois information for '127.0.0.1' because it is not a public ip
 
@@ -735,7 +826,7 @@ class IPInformation:
                                      'state': None,
                                      'tech_emails': None,
                                      'updated': None}],
-                   'reverse_ip': None}}
+                   }}
         """
         if not self.is_ip():
             # print '"%s" is not a valid IP Address.' %self.ip_address

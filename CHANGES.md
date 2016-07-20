@@ -1,5 +1,10 @@
 Changelog
 =========
+1.0.18 (2016-07-20)
+-------------------
+-added better checking for IPv4
+-added ability to get PTR record for IP
+
 1.0.17 (2016-07-06)
 -------------------
 -added Team Cymru AS documentation
