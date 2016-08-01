@@ -1,5 +1,5 @@
 #!/usr/bin/env python2.7
-# -*- coding: ascii -*-
+#-*- coding: utf-8 -*-
 from . import GeoDBConnection
 from . import time_info
 import netaddr
@@ -10,6 +10,7 @@ from datetime import datetime
 from GeoDBConnection import logging_file
 import dns
 from dateutil import parser#TODO:Maybe finish as creation_date using date parser
+import sys#TESTING
 
 # Regex for ASN Number and Name
 asn_info_regex = re.compile(r'AS(\d+)\s?(.+)?')
@@ -34,6 +35,7 @@ class IPInformation:
 
         try:
             self.ip_address = self.ip_address.encode('ascii')
+            # self.ISIP = self.is_ip(self.ip_address)#TODO:Eventually use this inseatd of calling a million times
 
         except ( UnicodeEncodeError, ValueError, AttributeError) as error:
             print u'{0} is not valid. It should be input as an ascii string.'.format( unicode(self.ip_address) )
@@ -540,45 +542,55 @@ class IPInformation:
         # Create dictionary for data to return
         data = { 'as': {} }
 
-        if self.is_public():#
-            # Query Maxmind DB for info
-            as_maxmind = geoipv4_as.asn_by_addr( self.ip_address )
+        # Verify is IP
+        if self.is_ip():
 
-            if as_maxmind:
-                as_maxmind = as_maxmind.decode('utf-8', "replace")
-                # Assign it as a regex group
-                as_info = re.search( asn_info_regex, as_maxmind.encode('utf-8') )
-                # Assign no error in beginning
-                data['as'].update( { 'error': False } )
+            # Verify is public IP
+            if self.is_public():
+                # Query Maxmind DB for info
+                as_maxmind = geoipv4_as.asn_by_addr( self.ip_address )
 
-                try:
-                    # Get ASNumber
-                    asnum_maxmind = int( as_info.group(1) )
-                    data['as'].update( { 'number':  asnum_maxmind } )
+                if as_maxmind:
+                    as_maxmind = as_maxmind.decode('utf-8', "replace")
+                    # Assign it as a regex group
+                    as_info = re.search( asn_info_regex, as_maxmind.encode('utf-8') )
+                    # Assign no error in beginning
+                    data['as'].update( { 'error': False } )
 
-                except (ValueError, TypeError, AttributeError, None):
-                    data['as'].update( { 'number': None} )
-                    data['as'].update( { 'error': True } )
+                    try:
+                        # Get ASNumber
+                        asnum_maxmind = int( as_info.group(1) )
+                        data['as'].update( { 'number':  asnum_maxmind } )
+
+                    except (ValueError, TypeError, AttributeError, None):
+                        data['as'].update( { 'number': None} )
+                        data['as'].update( { 'error': True } )
 
 
-                try:
-                    # Get ASName
-                    asname_maxmind = as_info.group(2)
-                    data['as'].update( { 'name': asname_maxmind} )
+                    try:
+                        # Get ASName
+                        asname_maxmind = as_info.group(2)
+                        data['as'].update( { 'name': asname_maxmind} )
 
-                except (ValueError, TypeError, AttributeError, None):
+                    except (ValueError, TypeError, AttributeError, None):
+                        data['as'].update( { 'name': None} )
+                        data['as'].update( { 'error': True } )
+
+                else:
+                    logging_file.info( 'No Maxmind AS information for "{0}" could be found in the database.'.format(self.ip_address) )
+                    data['as'].update( { 'number':  None } )
                     data['as'].update( { 'name': None} )
-                    data['as'].update( { 'error': True } )
-
+                    data['as'].update( { 'error': True} )
             else:
-                logging_file.info( 'No Maxmind AS information for "{0}" could be found in the database.'.format(self.ip_address) )
                 data['as'].update( { 'number':  None } )
                 data['as'].update( { 'name': None} )
-                data['as'].update( { 'error': True} )
+                data['as'].update( { 'error': False } )
+
+        # Not an IP
         else:
-            data['as'].update( { 'number':  None } )
-            data['as'].update( { 'name': None} )
-            data['as'].update( { 'error': True } )
+            data['as'].update({'number': None})
+            data['as'].update({'name': None})
+            data['as'].update({'error': True})
 
         return data
 
@@ -595,53 +607,77 @@ class IPInformation:
                 'registry': 'arin'}}
                 'error': False}}
         """
-
-        # Reverse the IP
-        ip_split = self.ip_address.split('.')
-        ip_split.reverse()
-        ip_reversed = '.'.join(ip_split)
-        # Set dns lookup
-        cymru_lookup_srv = '{0}.origin.asn.cymru.com'
-        lookup = cymru_lookup_srv.format(ip_reversed)
          # Create dictionary for data to return
         data = { 'as': {} }
 
-        try:
-            # Perform lookup
-            response = dns.resolver.query(lookup, 'TXT')
-            # Split response by '|' which is how Team Cymru formats it
-            response_split = str(response[0]).split('|')
+        # Verify is IP
+        if self.is_ip():
 
-            data['as'].update( { 'number':  int( response_split[0].strip( ' "\n' ) ) } )
-            data['as'].update( { 'cidr':  response_split[1].strip( ' "\n' ) } )
-            data['as'].update( { 'country_code':  response_split[2].strip( ' "\n' ) } )
-            data['as'].update( { 'registry':  response_split[3].strip( ' "\n' ) } )
-            data['as'].update( { 'creation_date':  response_split[4].strip( ' "\n' ) } )
-            data['as'].update( { 'error': False} )
-            return data
+            # Verify is public IP
+            if self.is_public():
+                # Reverse the IP
+                ip_split = self.ip_address.split('.')
+                ip_split.reverse()
+                ip_reversed = '.'.join(ip_split)
+                # Set dns lookup
+                cymru_lookup_srv = '{0}.origin.asn.cymru.com'
+                lookup = cymru_lookup_srv.format(ip_reversed)
 
-        except (ValueError, TypeError, AttributeError, dns.resolver.NXDOMAIN, dns.resolver.NoNameservers, dns.resolver.NoAnswer, dns.exception.Timeout) as error:
-            logging_file.error( '{0} in self.cymru_AS for IP: "{1}"'.format(error, self.ip_address) )
+                try:
+                    # Perform lookup
+                    response = dns.resolver.query(lookup, 'TXT')
+                    # Split response by '|' which is how Team Cymru formats it
+                    response_split = str(response[0]).split('|')
+
+                    data['as'].update( { 'number':  int( response_split[0].strip( ' "\n' ) ) } )
+                    data['as'].update( { 'cidr':  response_split[1].strip( ' "\n' ) } )
+                    data['as'].update( { 'country_code':  response_split[2].strip( ' "\n' ) } )
+                    data['as'].update( { 'registry':  response_split[3].strip( ' "\n' ) } )
+                    data['as'].update( { 'creation_date':  response_split[4].strip( ' "\n' ) } )
+                    data['as'].update( { 'error': False} )
+
+                except (ValueError, TypeError, AttributeError, dns.resolver.NXDOMAIN, dns.resolver.NoNameservers, dns.resolver.NoAnswer, dns.exception.Timeout) as error:
+                    logging_file.error( '{0} in self.cymru_AS for IP: "{1}"'.format(error, self.ip_address) )
+                    # Assign all data as None if error
+                    data['as'].update( { 'number':  None } )
+                    data['as'].update( { 'cidr':  None } )
+                    data['as'].update( { 'country_code':  None } )
+                    data['as'].update( { 'registry':  None } )
+                    data['as'].update( { 'creation_date':  None } )
+                    data['as'].update( { 'error':  True } )
+
+
+                except: #Unknown error
+                    logging_file.error( 'Unknown error caused in self.cymru_AS for IP: "{0}"'.format(self.ip_address) )
+                    # Assign all data as None if error
+                    data['as'].update( { 'number':  None } )
+                    data['as'].update( { 'cidr':  None } )
+                    data['as'].update( { 'country_code':  None } )
+                    data['as'].update( { 'registry':  None } )
+                    data['as'].update( { 'creation_date':  None } )
+                    data['as'].update( { 'error':  True } )
+
+            # Not public IP
+            else:
+                # Assign all data as None if error
+                data['as'].update({'number': None})
+                data['as'].update({'cidr': None})
+                data['as'].update({'country_code': None})
+                data['as'].update({'registry': None})
+                data['as'].update({'creation_date': None})
+                data['as'].update({'error': False})
+
+        # Not an IP
+        else:
             # Assign all data as None if error
-            data['as'].update( { 'number':  None } )
-            data['as'].update( { 'cidr':  None } )
-            data['as'].update( { 'country_code':  None } )
-            data['as'].update( { 'registry':  None } )
-            data['as'].update( { 'creation_date':  None } )
-            data['as'].update( { 'error':  True } )
-            return data
+            data['as'].update({'number': None})
+            data['as'].update({'cidr': None})
+            data['as'].update({'country_code': None})
+            data['as'].update({'registry': None})
+            data['as'].update({'creation_date': None})
+            data['as'].update({'error': True})
 
-
-        except: #Unknown error
-            logging_file.error( 'Unknown error caused in self.cymru_AS for IP: "{0}"'.format(self.ip_address) )
-            # Assign all data as None if error
-            data['as'].update( { 'number':  None } )
-            data['as'].update( { 'cidr':  None } )
-            data['as'].update( { 'country_code':  None } )
-            data['as'].update( { 'registry':  None } )
-            data['as'].update( { 'creation_date':  None } )
-            data['as'].update( { 'error':  True } )
-            return data
+        return data
 
     def get_ptr(self, DNSServer=None, DNSPort=53, DNSTimeout=4, DNSTCP=False):
         """
@@ -660,59 +696,66 @@ class IPInformation:
         error = None
         ptr_address = None
 
-        try:
-            # Make the IP arpa complaint for querying an IP as a dns record
-            reversed_ip = dns.reversename.from_address(self.ip_address)
+        # Verify is IP
+        if self.is_ip():
 
-            # Set DNS definition
-            dns_query = dns.resolver.Resolver()
+            try:
+                # Make the IP arpa complaint for querying an IP as a dns record
+                reversed_ip = dns.reversename.from_address(self.ip_address)
 
-            # Check DNS Timeout is valid
-            if isinstance(DNSTimeout, (int, float)):
-                # Set DNS timeout
-                dns_query.lifetime = DNSTimeout
-            else:
-                raise ValueError
+                # Set DNS definition
+                dns_query = dns.resolver.Resolver()
 
-            # If DNS server specified set it and set port
-            if DNSServer:
-                if isinstance(DNSServer, str):
+                # Check DNS Timeout is valid
+                if isinstance(DNSTimeout, (int, float)):
+                    # Set DNS timeout
+                    dns_query.lifetime = DNSTimeout
+                else:
+                    raise ValueError
 
-                    # Make sure dns server is valid ip
-                    if not self.is_ip(DNSServer):
-                        raise ValueError
+                # If DNS server specified set it and set port
+                if DNSServer:
+                    if isinstance(DNSServer, str):
 
-                    # Set DNS server to use
-                    dns_query.nameservers = [ DNSServer ]#TODO:Eventually allow ability to choose multiple servers.. Will require timeout or whatever to try new server afterwards
+                        # Make sure dns server is valid ip
+                        if not self.is_ip(DNSServer):
+                            raise ValueError
 
-                    # Check DNS Port is valid
-                    if isinstance(DNSPort, int) and DNSPort in xrange(1, 65535):
-                        # Set DNS port to use to connect to server
-                        dns_query.port = DNSPort
+                        # Set DNS server to use
+                        dns_query.nameservers = [ DNSServer ]#TODO:Eventually allow ability to choose multiple servers.. Will require timeout or whatever to try new server afterwards
+
+                        # Check DNS Port is valid
+                        if isinstance(DNSPort, int) and DNSPort in xrange(1, 65535):
+                            # Set DNS port to use to connect to server
+                            dns_query.port = DNSPort
+
+                        else:
+                            raise ValueError
 
                     else:
                         raise ValueError
 
-                else:
-                    raise ValueError
+                # Get address
+                ptr_address = str(dns_query.query(reversed_ip, 'PTR', tcp=DNSTCP)[0])
 
-            # Get address
-            ptr_address = str(dns_query.query(reversed_ip, 'PTR', tcp=DNSTCP)[0])
+            except IndexError:
+                error = "server response"
 
-        except IndexError:
-            error = "server response"
+            except dns.resolver.NXDOMAIN:
+                error = 'nxdomain'
 
-        except dns.resolver.NXDOMAIN:
-            error = 'nxdomain'
+            except dns.resolver.NoAnswer:
+                error = 'noanswer'
 
-        except dns.resolver.NoAnswer:
-            error = 'noanswer'
+            except (dns.exception.Timeout, dns.resolver.NoNameservers):
+                error = 'timeout'
 
-        except (dns.exception.Timeout, dns.resolver.NoNameservers):
-            error = 'timeout'
+            except ValueError:
+                error = 'server input'
 
-        except ValueError:
-            error = 'server input'
+        # Not IP:
+        else:
+            error = "not ip"
 
         ret = {'ptr': ptr_address, 'error': error}
 
