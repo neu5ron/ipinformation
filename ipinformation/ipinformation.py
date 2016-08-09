@@ -35,7 +35,7 @@ class IPInformation:
 
         try:
             self.ip_address = self.ip_address.encode('ascii')
-            # self.ISIP = self.is_ip(self.ip_address)#TODO:Eventually use this inseatd of calling a million times
+            self.ISIP = self.is_ip(self.ip_address)#TODO:Eventually use this inseatd of calling a million times
 
         except ( UnicodeEncodeError, ValueError, AttributeError) as error:
             print u'{0} is not valid. It should be input as an ascii string.'.format( unicode(self.ip_address) )
@@ -80,7 +80,7 @@ class IPInformation:
             False
         """
 
-        if self.is_ip():
+        if self.ISIP:
             ip_addr = netaddr.IPAddress(self.ip_address)
 
             if ip_addr.is_private():
@@ -120,13 +120,15 @@ class IPInformation:
                      'updated': datetime.datetime(2016, 1, 16, 18, 10, 6, 729149),
                      'version': '4'}}
         """
-        if not self.is_ip():
+        data = { 'general': { 'bits': None, 'type': None, 'updated': None, 'version': None} }
+
+        if not self.ISIP:
             # print '"%s" is not a valid IP Address.' %self.ip_address
-            logging_file.error( '"{0}" is not a valid IP Address.'.format(self.ip_address) )
-            return False
+            # logging_file.error( '"{0}" is not a valid IP Address.'.format(self.ip_address) )
+            return data
+
 
         if netaddr.valid_ipv4( self.ip_address ): #IPv4 Address
-            data = { 'general': {} }
             ip_version = '4'
             data['general'].update({'version':ip_version})
             ip_bits = netaddr.IPAddress( self.ip_address ).bits().replace( '.', '' ) #Set the IP bits for searching by subnet
@@ -141,8 +143,6 @@ class IPInformation:
                 ip_type = 'loopback'
             elif ip_addr.is_netmask():
                 ip_type = 'netmask'
-                # print '"%s" is a netmask.' %self.ip_address
-                logging_file.info( '"{0}" is a netmask.'.format(self.ip_address) )
             elif ip_addr.is_reserved():
                 ip_type = 'reserved'
             elif ip_addr.is_link_local():
@@ -151,7 +151,6 @@ class IPInformation:
                 ip_type = 'public'
             else: #Unknown Type
                 ip_type = 'unknown'
-                # print '"%s" is an unknown IP Address.' %self.ip_address
                 logging_file.error( '"{0}" is an unknown IP Address.'.format(self.ip_address) )
         elif netaddr.valid_ipv6( self.ip_address ): #IPv6 Address#TODO:Finish IPv6
             ip_version = '6'
@@ -224,37 +223,41 @@ class IPInformation:
             }
             return d
 
-        if not self.is_ip():
-            # print '"%s" is not a valid IP Address.' %self.ip_address
-            logging_file.error( '"{0}" is not a valid IP Address.'.format(self.ip_address) )
-            return False
-
         data = { 'geo': {} }
 
-        if self.is_public():
-            city_information = geoipv4_city.record_by_addr(self.ip_address)
+        if not self.ISIP:
+            # print '"%s" is not a valid IP Address.' %self.ip_address
+            logging_file.error( '"{0}" is not a valid IP Address.'.format(self.ip_address) )
+            data['geo'].update(null_geo_ip())
+            data['geo'].update({'error': 'yes'})
+            return data
 
-            if city_information:
-                data['geo'].update(city_information)
-                longitude = city_information.get('longitude')
-                latitude = city_information.get('latitude')
-                coordinates = [ longitude, latitude ]
-                data['geo'].update( { 'coordinates': coordinates } )
-                data['geo'].update( { 'error': 'no' } )
+        else:
 
-            # Assign all null values if IP not found in Maxmind DB
+            if self.is_public():
+                city_information = geoipv4_city.record_by_addr(self.ip_address)
+
+                if city_information:
+                    data['geo'].update(city_information)
+                    longitude = city_information.get('longitude')
+                    latitude = city_information.get('latitude')
+                    coordinates = [ longitude, latitude ]
+                    data['geo'].update( { 'coordinates': coordinates } )
+                    data['geo'].update( { 'error': 'no' } )
+
+                # Assign all null values if IP not found in Maxmind DB
+                else:
+                    data['geo'].update(null_geo_ip())
+                    data['geo'].update( { 'error': 'yes' } )
+                    print 'No Maxmind GeoIP information for "{0}".'.format(self.ip_address)
+                    logging_file.info( 'No Maxmind GeoIP information for "{0}".'.format(self.ip_address) )
+
+            # Assign all null values if not public IP
             else:
                 data['geo'].update(null_geo_ip())
-                data['geo'].update( { 'error': 'yes' } )
-                print 'No Maxmind GeoIP information for "{0}".'.format(self.ip_address)
-                logging_file.info( 'No Maxmind GeoIP information for "{0}".'.format(self.ip_address) )
+                data['geo'].update({ 'error': 'no' })
 
-        # Assign all null values if not public IP
-        else:
-            data['geo'].update(null_geo_ip())
-            data['geo'].update({ 'error': 'no' })
-
-        #TODO:Finish IPv6
+            #TODO:Finish IPv6
 
         return data
 
@@ -543,7 +546,7 @@ class IPInformation:
         data = { 'as': {} }
 
         # Verify is IP
-        if self.is_ip():
+        if self.ISIP:
 
             # Verify is public IP
             if self.is_public():
@@ -611,7 +614,7 @@ class IPInformation:
         data = { 'as': {} }
 
         # Verify is IP
-        if self.is_ip():
+        if self.ISIP:
 
             # Verify is public IP
             if self.is_public():
@@ -697,7 +700,7 @@ class IPInformation:
         ptr_address = None
 
         # Verify is IP
-        if self.is_ip():
+        if self.ISIP:
 
             try:
                 # Make the IP arpa complaint for querying an IP as a dns record
@@ -871,7 +874,7 @@ class IPInformation:
                                      'updated': None}],
                    }}
         """
-        if not self.is_ip():
+        if not self.ISIP:
             # print '"%s" is not a valid IP Address.' %self.ip_address
             logging_file.error( '"{0}" is not a valid IP Address.'.format(self.ip_address) )
             return None
