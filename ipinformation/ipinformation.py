@@ -740,6 +740,7 @@ class IPInformation:
 
                 # Get address
                 ptr_address = str(dns_query.query(reversed_ip, 'PTR', tcp=DNSTCP)[0])
+                ptr_address = ptr_address.strip('.')
 
             except IndexError:
                 error = "server response"
